@@ -12,6 +12,8 @@
 - `scripts/init_database.py`：初始化数据库并导入种子数据。
 - `scripts/import_wikidata_seed.py`：从 Wikidata 导入公开人物种子样本。
 - `scripts/import_wikidata_entities.py`：通过 Wikidata API 按 QID 导入公开人物实体、职业、国家、死亡事件。
+- `scripts/import_wikipedia_birth_year.py`：从 Wikipedia 出生年份分类扩展公开人物 QID，再导入 Wikidata 实体。
+- `scripts/import_wikipedia_year_range.py`：按出生年份范围限速扩展样本，失败记录到导入批次表。
 - `scripts/calculate_chart_snapshots.py`：根据出生事实生成三柱级命盘快照。
 - `scripts/evaluate_quality_rules.py`：生成初始规则验证记录和偏差矩阵。
 - `scripts/rebuild_database.py`：一键重建数据库，串起初始化、导入、快照、评估和校验。
@@ -58,6 +60,22 @@
 - 首批使用固定 QID 种子查询，避免在线 SPARQL 全库扫描过慢。
 - 大规模 1000 万级采集不应依赖在线 SPARQL 全库查询，应使用 Wikidata dump 或分批索引策略。
 - 当前导入写入 `public_persons`、`birth_facts` 和 `import_batches`。
+
+## 按出生年份扩展样本
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\import_wikipedia_birth_year.py --year 1950 --limit 100
+```
+
+这条管线先读取 English Wikipedia 的 `Category:<year> births`，取页面对应的 Wikidata QID，再用 Wikidata API 导入结构化出生事实。它比在线 SPARQL 全库扫描更适合分批扩大。
+
+按年份范围限速扩展：
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\import_wikipedia_year_range.py --start-year 1951 --end-year 1955 --limit 50 --pause-seconds 8
+```
+
+如果遇到 429 限流，脚本会退避等待，并把失败年份写入 `import_batches`，方便后续继续。
 
 ## 生成命盘快照
 

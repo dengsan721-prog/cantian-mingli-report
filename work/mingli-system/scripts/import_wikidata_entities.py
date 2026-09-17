@@ -6,6 +6,7 @@ import sqlite3
 import time
 import urllib.parse
 import urllib.request
+from urllib.error import HTTPError
 from pathlib import Path
 from typing import Any
 
@@ -39,7 +40,7 @@ def chunks(values: list[str], size: int) -> list[list[str]]:
     return [values[index:index + size] for index in range(0, len(values), size)]
 
 
-def api_get(params: dict[str, str], retries: int = 3) -> dict[str, Any]:
+def api_get(params: dict[str, str], retries: int = 6, pause: float = 0.5) -> dict[str, Any]:
     query = urllib.parse.urlencode(params)
     request = urllib.request.Request(
         f"{API}?{query}",
@@ -49,11 +50,22 @@ def api_get(params: dict[str, str], retries: int = 3) -> dict[str, Any]:
     for attempt in range(1, retries + 1):
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
+                if pause:
+                    time.sleep(pause)
                 return json.loads(response.read().decode("utf-8"))
+        except HTTPError as exc:
+            last_error = exc
+            if exc.code == 429 and attempt < retries:
+                retry_after = exc.headers.get("Retry-After")
+                wait = int(retry_after) if retry_after and retry_after.isdigit() else min(90, 10 * attempt)
+                time.sleep(wait)
+                continue
+            if attempt < retries:
+                time.sleep(attempt * 3)
         except Exception as exc:
             last_error = exc
             if attempt < retries:
-                time.sleep(attempt * 2)
+                time.sleep(attempt * 3)
     raise RuntimeError("Wikidata API request failed") from last_error
 
 
