@@ -1,7 +1,7 @@
 const GAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
 const ZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 
-const seedRecords = [
+const fallbackSeedRecords = [
   {
     name: "张乖平",
     gender: "male",
@@ -75,6 +75,15 @@ const seedRecords = [
     }
   }
 ];
+
+const seedRecords = buildSeedRecords(window.MINGLI_DATABASE_EXPORT) || fallbackSeedRecords;
+
+function buildSeedRecords(databaseExport) {
+  if (!databaseExport || !Array.isArray(databaseExport.localPeople) || databaseExport.localPeople.length === 0) {
+    return null;
+  }
+  return databaseExport.localPeople;
+}
 
 const form = document.getElementById("birthForm");
 const output = document.getElementById("reportOutput");
@@ -371,4 +380,3 @@ form.addEventListener("submit", (event) => {
 });
 
 render();
-
