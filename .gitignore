@@ -1,3 +1,7 @@
 outputs/
 work/xianyu-skills-install-package-*/
-
+work/mingli-system/data/imports/
+work/mingli-system/data/exports/
+work/mingli-system/data/cache/
+work/mingli-system/data/*.db-wal
+work/mingli-system/data/*.db-shm

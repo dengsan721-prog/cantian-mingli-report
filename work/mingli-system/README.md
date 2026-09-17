@@ -7,6 +7,9 @@
 - `report_model.md`：最高规格报告模型，定义完整输出结构、研判流程、质询标准和报告模板。
 - `database_schema.json`：结构化数据库字段，用来保存出生资料、排盘结果、校验事件、专家质询、报告版本。
 - `seed_records.json`：根据当前对话中已经提供的信息建立的种子人员资料，后续可继续补充时辰、事件和报告版本。
+- `DATABASE.md`：SQLite 数据库初始化、表结构和当前入库内容说明。
+- `database/schema.sql`：数据库正式 SQL 表结构。
+- `scripts/init_database.py`：初始化数据库、导入来源、理论、人物、案例和纠偏记录的脚本。
 - `knowledge_base.json`：理论规则库，把核心理法拆成可调用、可冲突处理、可追溯的规则条目。
 - `case_practice_records.json`：案例实践库，保存已出报告、命局模型、待验证事件、纠偏记录和复盘结论。
 - `ten_million_validation_architecture.md`：1000万人公开样本验证工程架构。
