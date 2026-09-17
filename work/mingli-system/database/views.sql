@@ -16,6 +16,11 @@ UNION ALL SELECT 'data_quality_assessments', COUNT(*) FROM data_quality_assessme
 UNION ALL SELECT 'validation_assignments', COUNT(*) FROM validation_assignments
 UNION ALL SELECT 'validation_metrics', COUNT(*) FROM validation_metrics
 UNION ALL SELECT 'validation_protocols', COUNT(*) FROM validation_protocols
+UNION ALL SELECT 'rectification_models', COUNT(*) FROM rectification_models
+UNION ALL SELECT 'birth_time_rectification_runs', COUNT(*) FROM birth_time_rectification_runs
+UNION ALL SELECT 'rectification_event_partitions', COUNT(*) FROM rectification_event_partitions
+UNION ALL SELECT 'rectification_candidates', COUNT(*) FROM rectification_candidates
+UNION ALL SELECT 'rectification_benchmarks', COUNT(*) FROM rectification_benchmarks
 UNION ALL SELECT 'report_runs', COUNT(*) FROM report_runs
 UNION ALL SELECT 'report_claims', COUNT(*) FROM report_claims
 UNION ALL SELECT 'import_batches', COUNT(*) FROM import_batches;
@@ -79,3 +84,15 @@ CREATE VIEW v_validation_split_counts AS
 SELECT dataset_split, era_bucket, COUNT(*) AS person_count
 FROM validation_assignments
 GROUP BY dataset_split, era_bucket;
+
+DROP VIEW IF EXISTS v_rectification_readiness;
+CREATE VIEW v_rectification_readiness AS
+SELECT
+  status,
+  model_id,
+  COUNT(*) AS run_count,
+  SUM(event_count) AS total_events,
+  ROUND(AVG(calibration_event_count), 2) AS avg_calibration_events,
+  ROUND(AVG(holdout_event_count), 2) AS avg_holdout_events
+FROM birth_time_rectification_runs
+GROUP BY status, model_id;

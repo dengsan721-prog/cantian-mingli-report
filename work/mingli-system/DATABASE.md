@@ -22,6 +22,7 @@
 - `scripts/enrich_wikidata_birthplaces.py`：按公开出生地 QID 回填坐标和时区实体引用。
 - `scripts/evaluate_quality_rules.py`：生成安全规则检查、偏差矩阵和验证资格指标。
 - `scripts/report_gate.py`：报告生成前检查资料是否支持所请求的分析模块。
+- `scripts/rectify_birth_time.py`：为无时辰且事件足够的人物生成十二时辰候选，并隔离校时事件与留出事件。
 - `scripts/rebuild_database.py`：一键重建数据库，串起初始化、导入、快照、评估和校验。
 - `scripts/db_stats.py`：输出数据库统计。
 - `scripts/validate_database.py`：校验表结构、JSON 字段和外键。
@@ -146,6 +147,24 @@
 当前安全检查规则是“无时辰公开样本必须降级”。它只验证系统行为，不作为预测准确率。结果验证必须使用隔离的验证集和测试集，并要求同一人物至少有 5 个事件、3 种事件类型及 3 个有日期事件。
 
 任何结果规则在运行前还必须登记验证协议：冻结规则版本、目标事件、预测时间窗、非命理基线、主指标、最小样本量和多重检验组。查看测试集后再改规则的结果只能进入新协议，不能回写成原协议命中。
+
+## 双轨校时
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\rectify_birth_time.py
+```
+
+脚本对无可靠时辰、至少有 5 个有日期事件且覆盖 3 类事件的公开人物生成十二时辰候选。较早事件进入校时集，较晚事件进入留出集，两者由数据库主键约束为互斥。当前内置模型处于 `draft`：只生成等先验候选，不选定时辰。只有在可靠已知时辰样本上完成隐藏答案盲测，并达到预先登记的准确率、概率校准和样本量门槛后，模型才能改为 `validated`。
+
+已知时辰盲测入口：
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\rectify_birth_time.py --benchmark-known
+```
+
+该模式在生成候选时不读取真实时辰；真实时支只写入独立基准表，待预测冻结后计算十二时辰准确率、相邻时辰准确率和概率校准。当前公开库没有符合事件门槛且时刻可靠的样本，因此基准表为空属于正确结果。
+
+数据库触发器禁止证据不足的模型改为 `validated`，并禁止草稿模型或低于概率阈值的结果写成 `selected`。最低硬条件为 500 个金标准盲测样本，并完整记录精确时辰准确率、相邻时辰准确率、Brier 分数和对数损失。
 
 ## 设计边界
 

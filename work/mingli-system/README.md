@@ -13,6 +13,7 @@
 - `scripts/init_database.py`：初始化数据库、导入来源、理论、人物、案例和纠偏记录的脚本。
 - `scripts/build_precision_foundation.py`：严格资料评分、模块准入和固定数据集划分。
 - `scripts/report_gate.py`：在生成报告前阻止证据不足的精细结论。
+- `scripts/rectify_birth_time.py`：双轨时辰纠偏，生成十二候选、隔离校时/留出事件并承接已知时辰盲测。
 - `knowledge_base.json`：理论规则库，把核心理法拆成可调用、可冲突处理、可追溯的规则条目。
 - `case_practice_records.json`：案例实践库，保存已出报告、命局模型、待验证事件、纠偏记录和复盘结论。
 - `ten_million_validation_architecture.md`：1000万人公开样本验证工程架构。

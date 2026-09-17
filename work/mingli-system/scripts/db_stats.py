@@ -27,6 +27,8 @@ def collect(db_path: Path) -> dict[str, object]:
             "validation_splits": rows(conn, "SELECT * FROM v_validation_split_counts"),
             "validation_metrics": rows(conn, "SELECT * FROM validation_metrics ORDER BY metric_type, dataset_split"),
             "validation_protocols": rows(conn, "SELECT * FROM validation_protocols ORDER BY protocol_type, protocol_id"),
+            "rectification_readiness": rows(conn, "SELECT * FROM v_rectification_readiness ORDER BY status, model_id"),
+            "rectification_models": rows(conn, "SELECT model_id, model_version, status, gold_sample_size, exact_branch_accuracy, adjacent_branch_accuracy FROM rectification_models ORDER BY model_id"),
             "rule_confidence": rows(conn, "SELECT * FROM v_rule_confidence"),
             "recent_import_batches": rows(conn, "SELECT * FROM v_recent_import_batches LIMIT 5"),
         }

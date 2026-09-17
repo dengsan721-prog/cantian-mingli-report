@@ -274,6 +274,11 @@ window.MINGLI_DATABASE_EXPORT = {
       "validation_assignments": 25264,
       "validation_metrics": 6,
       "validation_protocols": 2,
+      "rectification_models": 1,
+      "birth_time_rectification_runs": 409,
+      "rectification_event_partitions": 3458,
+      "rectification_candidates": 4908,
+      "rectification_benchmarks": 0,
       "report_runs": 0,
       "report_claims": 0,
       "import_batches": 1128
@@ -340,6 +345,16 @@ window.MINGLI_DATABASE_EXPORT = {
         "date_precision": "year",
         "time_precision": "unknown",
         "fact_count": 6792
+      }
+    ],
+    "rectificationReadiness": [
+      {
+        "status": "not_evaluable",
+        "model_id": "RECTIFICATION_MODEL_DRAFT_V1",
+        "run_count": 409,
+        "total_events": 3458,
+        "avg_calibration_events": 5.87,
+        "avg_holdout_events": 2.59
       }
     ]
   }

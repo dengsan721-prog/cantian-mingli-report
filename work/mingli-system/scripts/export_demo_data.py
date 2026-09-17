@@ -81,7 +81,13 @@ def stats(conn: sqlite3.Connection) -> dict[str, Any]:
     }
     quality = [dict(row) for row in conn.execute("SELECT * FROM v_public_person_quality")]
     precision = [dict(row) for row in conn.execute("SELECT * FROM v_birth_fact_precision")]
-    return {"counts": counts, "publicPersonQuality": quality, "birthFactPrecision": precision}
+    rectification = [dict(row) for row in conn.execute("SELECT * FROM v_rectification_readiness")]
+    return {
+        "counts": counts,
+        "publicPersonQuality": quality,
+        "birthFactPrecision": precision,
+        "rectificationReadiness": rectification,
+    }
 
 
 def export(db_path: Path, output: Path) -> dict[str, Any]:

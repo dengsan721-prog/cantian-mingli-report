@@ -26,6 +26,11 @@ REQUIRED_TABLES = [
     "validation_assignments",
     "validation_metrics",
     "validation_protocols",
+    "rectification_models",
+    "birth_time_rectification_runs",
+    "rectification_event_partitions",
+    "rectification_candidates",
+    "rectification_benchmarks",
     "report_runs",
     "report_claims",
     "import_batches",
@@ -42,6 +47,9 @@ JSON_COLUMNS = {
     "data_quality_assessments": ["allowed_modules_json", "blocked_modules_json", "reason_codes_json"],
     "validation_metrics": ["confidence_interval_json"],
     "validation_protocols": ["cohort_definition_json", "target_event_types_json", "forecast_window_json", "baseline_spec_json"],
+    "rectification_models": ["scoring_spec_json"],
+    "birth_time_rectification_runs": ["reason_codes_json", "leakage_audit_json"],
+    "rectification_candidates": ["chart_json", "supporting_event_ids_json", "opposing_event_ids_json"],
     "report_claims": ["rule_ids_json", "evidence_ids_json"],
 }
 
@@ -50,6 +58,13 @@ REQUIRED_COLUMNS = {
     "chart_snapshots": {"details_json", "boundary_flags_json", "engine_version"},
     "public_persons": {"gender"},
     "validation_assignments": {"era_bucket"},
+}
+
+REQUIRED_TRIGGERS = {
+    "trg_rectification_model_validation_insert",
+    "trg_rectification_model_validation_update",
+    "trg_rectification_selection_insert",
+    "trg_rectification_selection_update",
 }
 
 
@@ -81,18 +96,25 @@ def validate_required_columns(conn: sqlite3.Connection) -> list[str]:
     return errors
 
 
+def validate_required_triggers(conn: sqlite3.Connection) -> list[str]:
+    actual = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'trigger'")}
+    return [f"trigger {name} is missing" for name in sorted(REQUIRED_TRIGGERS - actual)]
+
+
 def validate(db_path: Path) -> dict[str, object]:
     conn = sqlite3.connect(db_path)
     try:
         missing = [table for table in REQUIRED_TABLES if not table_exists(conn, table)]
         json_errors = validate_json_columns(conn) if not missing else []
         column_errors = validate_required_columns(conn) if not missing else []
+        trigger_errors = validate_required_triggers(conn) if not missing else []
         foreign_key_errors = [list(row) for row in conn.execute("PRAGMA foreign_key_check").fetchall()]
         return {
             "database": str(db_path),
-            "ok": not missing and not json_errors and not column_errors and not foreign_key_errors,
+            "ok": not missing and not json_errors and not column_errors and not trigger_errors and not foreign_key_errors,
             "missing_tables": missing,
             "column_errors": column_errors,
+            "trigger_errors": trigger_errors,
             "json_errors": json_errors[:50],
             "json_error_count": len(json_errors),
             "foreign_key_errors": foreign_key_errors[:50],

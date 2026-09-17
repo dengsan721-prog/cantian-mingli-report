@@ -323,6 +323,90 @@ CREATE TABLE IF NOT EXISTS validation_protocols (
   FOREIGN KEY (rule_id) REFERENCES knowledge_rules(rule_id)
 );
 
+CREATE TABLE IF NOT EXISTS rectification_models (
+  model_id TEXT PRIMARY KEY,
+  model_version TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('draft', 'validated', 'retired')),
+  scoring_spec_json TEXT NOT NULL DEFAULT '{}',
+  trained_on_split TEXT,
+  gold_sample_size INTEGER NOT NULL DEFAULT 0,
+  exact_branch_accuracy REAL,
+  adjacent_branch_accuracy REAL,
+  brier_score REAL,
+  log_loss REAL,
+  minimum_selection_probability REAL NOT NULL DEFAULT 0.5,
+  minimum_probability_margin REAL NOT NULL DEFAULT 0.15,
+  notes TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (model_version)
+);
+
+CREATE TABLE IF NOT EXISTS birth_time_rectification_runs (
+  run_id TEXT PRIMARY KEY,
+  subject_type TEXT NOT NULL CHECK (subject_type IN ('local_person', 'public_person')),
+  subject_id TEXT NOT NULL,
+  birth_fact_id TEXT NOT NULL,
+  model_id TEXT NOT NULL,
+  method_version TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('candidate_only', 'not_evaluable', 'selected', 'abstained', 'validated')),
+  event_count INTEGER NOT NULL DEFAULT 0,
+  calibration_event_count INTEGER NOT NULL DEFAULT 0,
+  holdout_event_count INTEGER NOT NULL DEFAULT 0,
+  selected_branch TEXT,
+  selected_probability REAL,
+  probability_margin REAL,
+  normalized_entropy REAL,
+  reason_codes_json TEXT NOT NULL DEFAULT '[]',
+  leakage_audit_json TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (birth_fact_id) REFERENCES birth_facts(birth_fact_id),
+  FOREIGN KEY (model_id) REFERENCES rectification_models(model_id)
+);
+
+CREATE TABLE IF NOT EXISTS rectification_event_partitions (
+  run_id TEXT NOT NULL,
+  event_id TEXT NOT NULL,
+  partition_name TEXT NOT NULL CHECK (partition_name IN ('calibration', 'holdout')),
+  event_ordinal INTEGER NOT NULL,
+  assignment_hash TEXT NOT NULL,
+  PRIMARY KEY (run_id, event_id),
+  FOREIGN KEY (run_id) REFERENCES birth_time_rectification_runs(run_id),
+  FOREIGN KEY (event_id) REFERENCES life_events_public(event_id)
+);
+
+CREATE TABLE IF NOT EXISTS rectification_candidates (
+  candidate_id TEXT PRIMARY KEY,
+  run_id TEXT NOT NULL,
+  hour_branch TEXT NOT NULL,
+  representative_time TEXT NOT NULL,
+  hour_pillar TEXT,
+  chart_json TEXT NOT NULL DEFAULT '{}',
+  prior_probability REAL NOT NULL,
+  raw_score REAL,
+  posterior_probability REAL,
+  candidate_rank INTEGER,
+  supporting_event_ids_json TEXT NOT NULL DEFAULT '[]',
+  opposing_event_ids_json TEXT NOT NULL DEFAULT '[]',
+  candidate_status TEXT NOT NULL DEFAULT 'unscored',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (run_id) REFERENCES birth_time_rectification_runs(run_id)
+);
+
+CREATE TABLE IF NOT EXISTS rectification_benchmarks (
+  benchmark_id TEXT PRIMARY KEY,
+  run_id TEXT NOT NULL,
+  known_hour_branch TEXT NOT NULL,
+  predicted_hour_branch TEXT,
+  exact_match INTEGER,
+  adjacent_match INTEGER,
+  hidden_time_policy TEXT NOT NULL,
+  evaluation_split TEXT NOT NULL,
+  evaluated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (run_id) REFERENCES birth_time_rectification_runs(run_id)
+);
+
 CREATE TABLE IF NOT EXISTS report_runs (
   report_id TEXT PRIMARY KEY,
   subject_type TEXT NOT NULL CHECK (subject_type IN ('local_person', 'public_person')),
@@ -366,5 +450,65 @@ CREATE INDEX IF NOT EXISTS idx_quality_level ON data_quality_assessments(quality
 CREATE INDEX IF NOT EXISTS idx_validation_split ON validation_assignments(dataset_split);
 CREATE INDEX IF NOT EXISTS idx_validation_metric_rule ON validation_metrics(rule_id, dataset_split);
 CREATE INDEX IF NOT EXISTS idx_validation_protocol_rule ON validation_protocols(rule_id, status);
+CREATE INDEX IF NOT EXISTS idx_rectification_run_subject ON birth_time_rectification_runs(subject_type, subject_id);
+CREATE INDEX IF NOT EXISTS idx_rectification_run_status ON birth_time_rectification_runs(status, model_id);
+CREATE INDEX IF NOT EXISTS idx_rectification_candidate_run ON rectification_candidates(run_id, candidate_rank);
+CREATE INDEX IF NOT EXISTS idx_rectification_partition_run ON rectification_event_partitions(run_id, partition_name);
 CREATE INDEX IF NOT EXISTS idx_report_run_subject ON report_runs(subject_type, subject_id);
 CREATE INDEX IF NOT EXISTS idx_report_claim_report ON report_claims(report_id);
+
+CREATE TRIGGER IF NOT EXISTS trg_rectification_model_validation_insert
+BEFORE INSERT ON rectification_models
+WHEN NEW.status = 'validated' AND (
+  NEW.gold_sample_size < 500 OR
+  NEW.exact_branch_accuracy IS NULL OR
+  NEW.adjacent_branch_accuracy IS NULL OR
+  NEW.brier_score IS NULL OR
+  NEW.log_loss IS NULL
+)
+BEGIN
+  SELECT RAISE(ABORT, 'rectification model lacks the required blind-test evidence');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_rectification_model_validation_update
+BEFORE UPDATE OF status, gold_sample_size, exact_branch_accuracy, adjacent_branch_accuracy, brier_score, log_loss
+ON rectification_models
+WHEN NEW.status = 'validated' AND (
+  NEW.gold_sample_size < 500 OR
+  NEW.exact_branch_accuracy IS NULL OR
+  NEW.adjacent_branch_accuracy IS NULL OR
+  NEW.brier_score IS NULL OR
+  NEW.log_loss IS NULL
+)
+BEGIN
+  SELECT RAISE(ABORT, 'rectification model lacks the required blind-test evidence');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_rectification_selection_insert
+BEFORE INSERT ON birth_time_rectification_runs
+WHEN NEW.status = 'selected' AND NOT EXISTS (
+  SELECT 1 FROM rectification_models model
+  WHERE model.model_id = NEW.model_id
+    AND model.status = 'validated'
+    AND NEW.selected_branch IS NOT NULL
+    AND NEW.selected_probability >= model.minimum_selection_probability
+    AND NEW.probability_margin >= model.minimum_probability_margin
+)
+BEGIN
+  SELECT RAISE(ABORT, 'unvalidated or low-confidence rectification selection');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_rectification_selection_update
+BEFORE UPDATE OF status, model_id, selected_branch, selected_probability, probability_margin
+ON birth_time_rectification_runs
+WHEN NEW.status = 'selected' AND NOT EXISTS (
+  SELECT 1 FROM rectification_models model
+  WHERE model.model_id = NEW.model_id
+    AND model.status = 'validated'
+    AND NEW.selected_branch IS NOT NULL
+    AND NEW.selected_probability >= model.minimum_selection_probability
+    AND NEW.probability_margin >= model.minimum_probability_margin
+)
+BEGIN
+  SELECT RAISE(ABORT, 'unvalidated or low-confidence rectification selection');
+END;

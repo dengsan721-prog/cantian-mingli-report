@@ -16,6 +16,7 @@ from enrich_wikidata_birthplaces import coordinate  # noqa: E402
 from export_demo_data import confidence_from_quality  # noqa: E402
 from import_wikidata_entities import structured_event_id  # noqa: E402
 from report_gate import gate_decision  # noqa: E402
+from rectify_birth_time import BRANCH_ORDER, assignment_hash, branches_are_adjacent, partition_events  # noqa: E402
 from time_calibration import true_solar_time  # noqa: E402
 from datetime import datetime  # noqa: E402
 
@@ -89,6 +90,28 @@ class PrecisionFoundationTests(unittest.TestCase):
         self.assertEqual("A", confidence_from_quality("L4"))
         self.assertEqual("B", confidence_from_quality("L3"))
         self.assertEqual("D", confidence_from_quality("L1"))
+
+    def test_rectification_partition_is_chronological_and_disjoint(self) -> None:
+        events = [
+            {"event_id": f"E{index}", "event_date": f"20{index:02d}-01-01"}
+            for index in range(8, 0, -1)
+        ]
+        calibration, holdout = partition_events(events)  # type: ignore[arg-type]
+        calibration_ids = {event["event_id"] for event in calibration}
+        holdout_ids = {event["event_id"] for event in holdout}
+        self.assertFalse(calibration_ids & holdout_ids)
+        self.assertLess(calibration[-1]["event_date"], holdout[0]["event_date"])
+        self.assertGreaterEqual(len(holdout), 2)
+
+    def test_rectification_has_twelve_stable_candidates(self) -> None:
+        self.assertEqual(12, len(BRANCH_ORDER))
+        self.assertEqual(
+            assignment_hash("R1", "E1", "holdout"),
+            assignment_hash("R1", "E1", "holdout"),
+        )
+        self.assertTrue(branches_are_adjacent("子", "亥"))
+        self.assertTrue(branches_are_adjacent("子", "丑"))
+        self.assertFalse(branches_are_adjacent("子", "卯"))
 
     def test_chart_without_time_never_invents_hour_pillar(self) -> None:
         chart = calculate_chart("2018-04-05", None, "unknown")

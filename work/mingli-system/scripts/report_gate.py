@@ -97,11 +97,28 @@ def run(db_path: Path, subject_type: str, subject_id: str, requested_modules: li
     conn = sqlite3.connect(db_path)
     try:
         decision = gate_decision(load_assessment(conn, subject_type, subject_id), requested_modules)
+        rectification = None
+        if subject_type == "public_person":
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                """
+                SELECT run_id, status, model_id, event_count,
+                       calibration_event_count, holdout_event_count,
+                       selected_branch, selected_probability
+                FROM birth_time_rectification_runs
+                WHERE subject_type = ? AND subject_id = ?
+                ORDER BY updated_at DESC LIMIT 1
+                """,
+                (subject_type, subject_id),
+            ).fetchone()
+            if row:
+                rectification = dict(row)
         return {
             "model_version": REPORT_MODEL_VERSION,
             "subject_type": subject_type,
             "subject_id": subject_id,
             "requested_modules": sorted(set(requested_modules)),
+            "birth_time_rectification": rectification,
             **decision,
         }
     finally:

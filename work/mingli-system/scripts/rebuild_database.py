@@ -10,6 +10,7 @@ from db_stats import collect as collect_stats
 from evaluate_quality_rules import run as evaluate_rules
 from import_wikidata_entities import run as import_wikidata_entities
 from init_database import DEFAULT_DB, create_database
+from rectify_birth_time import run as rectify_birth_times
 from validate_database import validate
 
 
@@ -25,6 +26,7 @@ def rebuild(db_path: Path, qids_path: Path, skip_wikidata: bool) -> dict[str, ob
     chart_result = calculate_snapshots(db_path)
     precision_result = build_precision_foundation(db_path)
     eval_result = evaluate_rules(db_path)
+    rectification_result = rectify_birth_times(db_path, limit=None, benchmark_known=False)
     validation = validate(db_path)
     stats = collect_stats(db_path)
     return {
@@ -34,6 +36,7 @@ def rebuild(db_path: Path, qids_path: Path, skip_wikidata: bool) -> dict[str, ob
         "chart_snapshots": chart_result,
         "precision_foundation": precision_result,
         "rule_evaluation": eval_result,
+        "birth_time_rectification": rectification_result,
         "validation": validation,
         "stats": stats,
     }
