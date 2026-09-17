@@ -48,11 +48,25 @@ def run(db_path: Path, start_year: int, end_year: int, limit: int, pause_seconds
     for year in range(start_year, end_year + 1):
         qids_path = CACHE / f"wikipedia_birth_year_{year}_qids.txt"
         try:
+            print(json.dumps({"status": "starting_year", "year": year}, ensure_ascii=False), flush=True)
             result = import_birth_year(db_path, year, limit, qids_path)
             results.append(result)
+            print(
+                json.dumps(
+                    {
+                        "status": "finished_year",
+                        "year": year,
+                        "unique_qids": result.get("unique_qids"),
+                        "imported_people": result.get("import_result", {}).get("imported_people"),
+                    },
+                    ensure_ascii=False,
+                ),
+                flush=True,
+            )
         except Exception as exc:
             record_failed_batch(db_path, year, exc)
             errors.append({"year": year, "error": str(exc)})
+            print(json.dumps({"status": "failed_year", "year": year, "error": str(exc)}, ensure_ascii=False), flush=True)
             if not continue_on_error:
                 break
         if pause_seconds:
@@ -98,4 +112,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
