@@ -3,123 +3,205 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>参天命理报告 Demo</title>
+    <meta name="theme-color" content="#f5f5f7" />
+    <title>参天 · 命理综合研判</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="app-shell">
-      <header class="topbar">
-        <div class="brand-block">
-          <div class="seal">参</div>
+    <div class="app-shell">
+      <aside class="history-sidebar" id="historySidebar" aria-label="查询记录">
+        <div class="brand-row">
+          <div class="brand-mark" aria-hidden="true">参</div>
           <div>
-            <h1>参天命理报告</h1>
-            <p>系统研判模型 V1.0</p>
+            <strong>参天</strong>
+            <span>命理综合研判</span>
           </div>
         </div>
-        <div class="model-status">
-          <span>四柱主骨</span>
-          <span>专家质询</span>
-          <span>置信度标注</span>
+
+        <button class="new-report-button" id="newReportButton" type="button">
+          <span aria-hidden="true">＋</span>
+          新建报告
+        </button>
+
+        <div class="history-heading">
+          <h2>查询记录</h2>
+          <span id="recordCount">0</span>
         </div>
-      </header>
+        <label class="search-field">
+          <span class="sr-only">搜索姓名或出生地</span>
+          <span aria-hidden="true">⌕</span>
+          <input id="historySearch" type="search" placeholder="搜索姓名或出生地" autocomplete="off" />
+        </label>
+        <div class="history-list" id="historyList" aria-live="polite"></div>
+        <p class="local-note"><span class="status-dot"></span>记录仅保存在此设备</p>
+      </aside>
 
-      <section class="workspace">
-        <aside class="panel input-panel">
-          <div class="panel-head">
-            <h2>建档</h2>
-            <button class="ghost-button" id="loadSeedButton" type="button">载入样例</button>
+      <main class="main-stage">
+        <header class="stage-header">
+          <button class="icon-button mobile-only" id="historyToggle" type="button" aria-label="打开查询记录" title="查询记录">☰</button>
+          <div>
+            <p class="eyebrow" id="pageEyebrow">新建研判</p>
+            <h1 id="pageTitle">录入出生信息</h1>
           </div>
+          <div class="header-actions" id="reportActions" hidden>
+            <button class="secondary-button" id="editReportButton" type="button">修改资料</button>
+            <button class="icon-button" id="printButton" type="button" aria-label="打印报告" title="打印报告">⎙</button>
+            <button class="icon-button danger" id="deleteButton" type="button" aria-label="删除记录" title="删除记录">×</button>
+          </div>
+        </header>
 
-          <form id="birthForm" class="birth-form">
-            <label>
-              <span>姓名</span>
-              <input id="name" name="name" value="张乖平" autocomplete="off" />
-            </label>
+        <section class="form-view" id="formView">
+          <form id="birthForm" novalidate>
+            <section class="form-section" aria-labelledby="identityHeading">
+              <div class="section-heading">
+                <span>01</span>
+                <div>
+                  <h2 id="identityHeading">基本资料</h2>
+                  <p>姓名、性别与出生日期</p>
+                </div>
+              </div>
 
-            <div class="field-grid">
-              <label>
-                <span>性别</span>
-                <select id="gender" name="gender">
-                  <option value="male">男</option>
-                  <option value="female">女</option>
-                  <option value="unknown">未知</option>
-                </select>
-              </label>
-              <label>
-                <span>历法</span>
-                <select id="calendarType" name="calendarType">
-                  <option value="lunar">农历</option>
-                  <option value="solar">阳历</option>
-                </select>
-              </label>
-            </div>
+              <div class="fields-grid two-columns">
+                <label class="field full-mobile">
+                  <span>姓名 <b>*</b></span>
+                  <input id="name" name="name" required maxlength="40" autocomplete="name" placeholder="请输入姓名" />
+                </label>
 
-            <div class="date-grid">
-              <label>
-                <span>年</span>
-                <input id="year" name="year" type="number" value="1965" />
-              </label>
-              <label>
-                <span>月</span>
-                <input id="month" name="month" type="number" value="10" />
-              </label>
-              <label>
-                <span>日</span>
-                <input id="day" name="day" type="number" value="29" />
-              </label>
-            </div>
+                <fieldset class="field">
+                  <legend>性别</legend>
+                  <div class="segmented-control">
+                    <label><input type="radio" name="gender" value="male" checked /><span>男</span></label>
+                    <label><input type="radio" name="gender" value="female" /><span>女</span></label>
+                    <label><input type="radio" name="gender" value="unknown" /><span>未知</span></label>
+                  </div>
+                </fieldset>
+              </div>
 
-            <label class="check-row">
-              <input id="isLeapMonth" name="isLeapMonth" type="checkbox" />
-              <span>闰月</span>
-            </label>
+              <fieldset class="field calendar-field">
+                <legend>历法</legend>
+                <div class="segmented-control compact">
+                  <label><input type="radio" name="calendarType" value="solar" checked /><span>阳历</span></label>
+                  <label><input type="radio" name="calendarType" value="lunar" /><span>农历</span></label>
+                </div>
+              </fieldset>
 
-            <label>
-              <span>时辰</span>
-              <input id="timeText" name="timeText" value="" placeholder="如：子时、早上9点、05:25、未知" />
-            </label>
+              <div class="date-row">
+                <label class="field">
+                  <span>年 <b>*</b></span>
+                  <input id="year" name="year" type="number" required min="1000" max="2100" inputmode="numeric" placeholder="1989" />
+                </label>
+                <label class="field">
+                  <span>月 <b>*</b></span>
+                  <input id="month" name="month" type="number" required min="1" max="12" inputmode="numeric" placeholder="3" />
+                </label>
+                <label class="field">
+                  <span>日 <b>*</b></span>
+                  <input id="day" name="day" type="number" required min="1" max="31" inputmode="numeric" placeholder="1" />
+                </label>
+                <label class="switch-row" id="leapMonthRow" hidden>
+                  <input id="isLeapMonth" name="isLeapMonth" type="checkbox" />
+                  <span class="switch" aria-hidden="true"></span>
+                  <span>闰月</span>
+                </label>
+              </div>
+            </section>
 
-            <label>
-              <span>出生地</span>
-              <textarea id="birthplace" name="birthplace" rows="3">陕西省宝鸡市陈仓区周原镇营子头村15组</textarea>
-            </label>
+            <section class="form-section" aria-labelledby="timeHeading">
+              <div class="section-heading">
+                <span>02</span>
+                <div>
+                  <h2 id="timeHeading">时刻与地点</h2>
+                  <p>用于时柱、节气与地方时校正</p>
+                </div>
+              </div>
 
-            <div class="actions">
-              <button class="primary-button" type="submit">生成报告</button>
-              <button class="ghost-button" id="printButton" type="button">打印</button>
+              <div class="fields-grid two-columns">
+                <label class="field">
+                  <span>出生时刻</span>
+                  <input id="timeText" name="timeText" placeholder="例如 05:25、亥时或不详" autocomplete="off" />
+                  <small>分钟准确时填写 24 小时制</small>
+                </label>
+                <label class="field full-mobile">
+                  <span>出生地点 <b>*</b></span>
+                  <input id="birthplace" name="birthplace" required maxlength="160" placeholder="省、市、区县、乡镇或医院" autocomplete="off" />
+                </label>
+              </div>
+
+              <details class="precision-panel" id="precisionPanel">
+                <summary>
+                  <span>精度校验</span>
+                  <small>经纬度、时区与来源核验</small>
+                </summary>
+                <div class="precision-content">
+                  <div class="fields-grid three-columns">
+                    <label class="field">
+                      <span>经度</span>
+                      <input id="longitude" name="longitude" type="number" step="0.000001" min="-180" max="180" placeholder="108.940000" />
+                    </label>
+                    <label class="field">
+                      <span>纬度</span>
+                      <input id="latitude" name="latitude" type="number" step="0.000001" min="-90" max="90" placeholder="34.340000" />
+                    </label>
+                    <label class="field">
+                      <span>IANA 时区</span>
+                      <input id="timezone" name="timezone" value="Asia/Shanghai" placeholder="Asia/Shanghai" />
+                    </label>
+                  </div>
+                  <div class="verification-list">
+                    <label class="check-row">
+                      <input id="calendarVerified" name="calendarVerified" type="checkbox" />
+                      <span>日期已与出生证、户籍或家族记录交叉核验</span>
+                    </label>
+                    <label class="check-row">
+                      <input id="timeStandardVerified" name="timeStandardVerified" type="checkbox" />
+                      <span>出生当年的法定时制与夏令时已核验</span>
+                    </label>
+                  </div>
+                </div>
+              </details>
+            </section>
+
+            <section class="form-section" aria-labelledby="eventHeading">
+              <div class="section-heading with-action">
+                <span>03</span>
+                <div>
+                  <h2 id="eventHeading">人生事件</h2>
+                  <p>用于校时与结论复核，可稍后补充</p>
+                </div>
+                <button class="secondary-button small" id="addEventButton" type="button">＋ 添加事件</button>
+              </div>
+              <div class="events-list" id="eventsList"></div>
+              <div class="events-empty" id="eventsEmpty">
+                <p>尚未添加事件</p>
+                <span>建议至少 5 项、覆盖 3 类事件，系统才会启动校时候选分析。</span>
+              </div>
+            </section>
+
+            <div class="submit-bar">
+              <div>
+                <strong>资料会随报告保存在本机</strong>
+                <span>可在左侧查询记录中随时重新打开</span>
+              </div>
+              <button class="primary-button" id="generateButton" type="submit">
+                <span class="button-label">生成命理报告</span>
+                <span aria-hidden="true">→</span>
+              </button>
             </div>
           </form>
-
-          <div class="data-card">
-            <h3>模型数据</h3>
-            <dl>
-              <div>
-                <dt>资料层</dt>
-                <dd>出生信息、地点、时辰边界</dd>
-              </div>
-              <div>
-                <dt>理法层</dt>
-                <dd>五行、十神、调候、格局</dd>
-              </div>
-              <div>
-                <dt>质询层</dt>
-                <dd>缺失项、置信度、校验问题</dd>
-              </div>
-            </dl>
-          </div>
-        </aside>
-
-        <section class="panel report-panel">
-          <div class="panel-head">
-            <h2 id="reportTitle">张乖平命理报告</h2>
-            <div class="confidence" id="confidenceBadge">C级</div>
-          </div>
-          <article id="reportOutput" class="report-paper"></article>
         </section>
-      </section>
-    </main>
 
-    <script src="./assets/mingli_database_export.js"></script>
+        <section class="report-view" id="reportView" hidden>
+          <div class="report-hero" id="reportHero"></div>
+          <div class="report-layout">
+            <nav class="report-index" id="reportIndex" aria-label="报告目录"></nav>
+            <article class="report-content" id="reportContent"></article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="sidebar-scrim" id="sidebarScrim" hidden></div>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
     <script src="./app.js"></script>
   </body>
 </html>
