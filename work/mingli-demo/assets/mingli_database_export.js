@@ -171,20 +171,28 @@ window.MINGLI_DATABASE_EXPORT = {
       "theory_sources": 6,
       "knowledge_rules": 8,
       "local_persons": 9,
-      "public_persons": 20,
-      "birth_facts": 29,
-      "chart_snapshots": 28,
-      "life_events_public": 13,
+      "public_persons": 1004,
+      "birth_facts": 1013,
+      "chart_snapshots": 915,
+      "life_events_public": 105,
       "case_studies": 3,
       "correction_records": 2,
-      "rule_evaluations": 19,
+      "rule_evaluations": 906,
       "bias_matrices": 1,
-      "import_batches": 1
+      "import_batches": 38
     },
     "publicPersonQuality": [
       {
+        "quality_level": "L0",
+        "person_count": 28
+      },
+      {
+        "quality_level": "L1",
+        "person_count": 199
+      },
+      {
         "quality_level": "L2",
-        "person_count": 20
+        "person_count": 777
       }
     ],
     "birthFactPrecision": [
@@ -210,13 +218,25 @@ window.MINGLI_DATABASE_EXPORT = {
         "subject_type": "public_person",
         "date_precision": "day",
         "time_precision": "unknown",
-        "fact_count": 19
+        "fact_count": 906
       },
       {
         "subject_type": "public_person",
         "date_precision": "month",
         "time_precision": "unknown",
-        "fact_count": 1
+        "fact_count": 4
+      },
+      {
+        "subject_type": "public_person",
+        "date_precision": "unknown",
+        "time_precision": "unknown",
+        "fact_count": 28
+      },
+      {
+        "subject_type": "public_person",
+        "date_precision": "year",
+        "time_precision": "unknown",
+        "fact_count": 66
       }
     ]
   }
