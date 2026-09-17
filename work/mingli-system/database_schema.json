@@ -1,0 +1,148 @@
+{
+  "database_name": "mingli_system_database",
+  "version": "1.0.0",
+  "description": "命理综合研判系统数据库结构，用于保存出生资料、排盘结果、命局分析、专家质询、报告版本与案例校验。",
+  "collections": {
+    "persons": {
+      "description": "人员基础资料，一人一档。",
+      "fields": {
+        "person_id": "string, unique",
+        "name": "string",
+        "gender": "male | female | unknown",
+        "birth": {
+          "calendar_type": "solar | lunar",
+          "year": "integer",
+          "month": "integer",
+          "day": "integer",
+          "is_leap_lunar_month": "boolean | null",
+          "time_text": "string | null",
+          "hour_branch": "string | null",
+          "time_accuracy": "exact | approximate | unknown | boundary",
+          "timezone": "string"
+        },
+        "birthplace": {
+          "raw": "string",
+          "country": "string | null",
+          "province": "string | null",
+          "city": "string | null",
+          "county_or_district": "string | null",
+          "town": "string | null",
+          "village": "string | null",
+          "longitude": "number | null",
+          "latitude": "number | null"
+        },
+        "privacy_level": "local_private",
+        "notes": "string"
+      }
+    },
+    "chart_calculations": {
+      "description": "排盘与校时结果。",
+      "fields": {
+        "chart_id": "string, unique",
+        "person_id": "string",
+        "solar_date_time_beijing": "string | null",
+        "solar_date_time_true_solar": "string | null",
+        "lunar_date": "string | null",
+        "jieqi_prev": "string | null",
+        "jieqi_next": "string | null",
+        "is_near_jieqi_boundary": "boolean",
+        "is_near_hour_boundary": "boolean",
+        "bazi": {
+          "year_pillar": "string | null",
+          "month_pillar": "string | null",
+          "day_pillar": "string | null",
+          "hour_pillar": "string | null",
+          "stable_pillars": "array"
+        },
+        "day_master": "string | null",
+        "confidence": "A | B | C | D",
+        "calculation_notes": "string"
+      }
+    },
+    "analysis_core": {
+      "description": "命局核心分析。",
+      "fields": {
+        "analysis_id": "string, unique",
+        "chart_id": "string",
+        "model_name": "string",
+        "day_master_strength": "strong | balanced | weak | uncertain",
+        "seasonal_climate": {
+          "cold_hot": "cold | warm | hot | neutral",
+          "dry_wet": "dry | wet | balanced | uncertain",
+          "adjustment_need": "string"
+        },
+        "five_elements": {
+          "wood": "string",
+          "fire": "string",
+          "earth": "string",
+          "metal": "string",
+          "water": "string"
+        },
+        "ten_gods": {
+          "bi_jie": "string",
+          "shi_shang": "string",
+          "cai": "string",
+          "guan_sha": "string",
+          "yin": "string"
+        },
+        "useful_elements": "array",
+        "unfavorable_elements": "array",
+        "structure_summary": "string",
+        "key_conflicts_combinations": "array"
+      }
+    },
+    "expert_review": {
+      "description": "专家质询与待补信息。",
+      "fields": {
+        "review_id": "string, unique",
+        "person_id": "string",
+        "confidence_notes": "string",
+        "missing_information": "array",
+        "questions_for_validation": "array",
+        "downgraded_sections": "array",
+        "revision_policy": "string"
+      }
+    },
+    "life_events": {
+      "description": "用于反推喜忌和校验大运的真实人生事件。",
+      "fields": {
+        "event_id": "string, unique",
+        "person_id": "string",
+        "event_date": "string | null",
+        "age": "number | null",
+        "event_type": "migration | marriage | childbirth | career | wealth | illness | family | accident | education | other",
+        "description": "string",
+        "source": "user_provided | inferred | unknown",
+        "confidence": "high | medium | low"
+      }
+    },
+    "reports": {
+      "description": "报告版本记录。",
+      "fields": {
+        "report_id": "string, unique",
+        "person_id": "string",
+        "report_version": "string",
+        "report_type": "full | revised | summary | annual | compatibility",
+        "created_at": "string",
+        "input_snapshot": "object",
+        "model_version": "string",
+        "writing_block_id": "string | null",
+        "report_path": "string | null",
+        "status": "draft | delivered | revised"
+      }
+    },
+    "knowledge_rules": {
+      "description": "命理知识规则库，保存理法原则，不保存长篇原文。",
+      "fields": {
+        "rule_id": "string, unique",
+        "system": "bazi | ziwei | qimen | meihua | liuyao | folk | general",
+        "topic": "string",
+        "rule_summary": "string",
+        "usage_scope": "string",
+        "priority": "core | auxiliary | optional",
+        "conflict_policy": "string"
+      }
+    }
+  }
+}
+

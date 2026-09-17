@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>参天命理报告 Demo</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <div class="seal">参</div>
+          <div>
+            <h1>参天命理报告</h1>
+            <p>系统研判模型 V1.0</p>
+          </div>
+        </div>
+        <div class="model-status">
+          <span>四柱主骨</span>
+          <span>专家质询</span>
+          <span>置信度标注</span>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <aside class="panel input-panel">
+          <div class="panel-head">
+            <h2>建档</h2>
+            <button class="ghost-button" id="loadSeedButton" type="button">载入样例</button>
+          </div>
+
+          <form id="birthForm" class="birth-form">
+            <label>
+              <span>姓名</span>
+              <input id="name" name="name" value="张乖平" autocomplete="off" />
+            </label>
+
+            <div class="field-grid">
+              <label>
+                <span>性别</span>
+                <select id="gender" name="gender">
+                  <option value="male">男</option>
+                  <option value="female">女</option>
+                  <option value="unknown">未知</option>
+                </select>
+              </label>
+              <label>
+                <span>历法</span>
+                <select id="calendarType" name="calendarType">
+                  <option value="lunar">农历</option>
+                  <option value="solar">阳历</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="date-grid">
+              <label>
+                <span>年</span>
+                <input id="year" name="year" type="number" value="1965" />
+              </label>
+              <label>
+                <span>月</span>
+                <input id="month" name="month" type="number" value="10" />
+              </label>
+              <label>
+                <span>日</span>
+                <input id="day" name="day" type="number" value="29" />
+              </label>
+            </div>
+
+            <label class="check-row">
+              <input id="isLeapMonth" name="isLeapMonth" type="checkbox" />
+              <span>闰月</span>
+            </label>
+
+            <label>
+              <span>时辰</span>
+              <input id="timeText" name="timeText" value="" placeholder="如：子时、早上9点、05:25、未知" />
+            </label>
+
+            <label>
+              <span>出生地</span>
+              <textarea id="birthplace" name="birthplace" rows="3">陕西省宝鸡市陈仓区周原镇营子头村15组</textarea>
+            </label>
+
+            <div class="actions">
+              <button class="primary-button" type="submit">生成报告</button>
+              <button class="ghost-button" id="printButton" type="button">打印</button>
+            </div>
+          </form>
+
+          <div class="data-card">
+            <h3>模型数据</h3>
+            <dl>
+              <div>
+                <dt>资料层</dt>
+                <dd>出生信息、地点、时辰边界</dd>
+              </div>
+              <div>
+                <dt>理法层</dt>
+                <dd>五行、十神、调候、格局</dd>
+              </div>
+              <div>
+                <dt>质询层</dt>
+                <dd>缺失项、置信度、校验问题</dd>
+              </div>
+            </dl>
+          </div>
+        </aside>
+
+        <section class="panel report-panel">
+          <div class="panel-head">
+            <h2 id="reportTitle">张乖平命理报告</h2>
+            <div class="confidence" id="confidenceBadge">C级</div>
+          </div>
+          <article id="reportOutput" class="report-paper"></article>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
+

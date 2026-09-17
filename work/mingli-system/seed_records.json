@@ -1,0 +1,370 @@
+{
+  "database_name": "mingli_system_database",
+  "version": "1.0.0",
+  "created_from": "current_conversation",
+  "persons": [
+    {
+      "person_id": "P_DENG_XIN_1989",
+      "name": "邓鑫",
+      "gender": "male",
+      "birth": {
+        "calendar_type": "lunar",
+        "year": 1989,
+        "month": 3,
+        "day": 1,
+        "is_leap_lunar_month": null,
+        "time_text": "亥时",
+        "hour_branch": "亥",
+        "time_accuracy": "approximate",
+        "timezone": "Asia/Shanghai"
+      },
+      "birthplace": {
+        "raw": "陕西省商洛市西照川镇石佛寺乡碾子坪村",
+        "country": "中国",
+        "province": "陕西省",
+        "city": "商洛市",
+        "county_or_district": "山阳县",
+        "town": "西照川镇",
+        "village": "碾子坪村",
+        "longitude": null,
+        "latitude": null
+      },
+      "known_chart": {
+        "solar_date": "1989-04-06",
+        "bazi_core": "己巳年、戊辰月、丙申日、己亥时",
+        "day_master": "丙火",
+        "model_name": "输出经营型、外部成事型、中年立局型"
+      },
+      "privacy_level": "local_private",
+      "notes": "农历按非闰月处理；出生地需真太阳时校验。"
+    },
+    {
+      "person_id": "P_MA_YUFEN_1988",
+      "name": "马雨芬",
+      "gender": "female",
+      "birth": {
+        "calendar_type": "lunar",
+        "year": 1988,
+        "month": 10,
+        "day": 21,
+        "is_leap_lunar_month": null,
+        "time_text": null,
+        "hour_branch": null,
+        "time_accuracy": "unknown",
+        "timezone": "Asia/Shanghai"
+      },
+      "birthplace": {
+        "raw": "陕西省宝鸡市陈仓区周原镇王家村马家沟组",
+        "country": "中国",
+        "province": "陕西省",
+        "city": "宝鸡市",
+        "county_or_district": "陈仓区",
+        "town": "周原镇",
+        "village": "王家村马家沟组",
+        "longitude": null,
+        "latitude": null
+      },
+      "known_chart": {
+        "solar_date": "1988-11-29",
+        "bazi_core": "戊辰年、癸亥月、戊子日",
+        "day_master": "戊土",
+        "model_name": "财重现实型、内压承载型、家庭稳定型"
+      },
+      "privacy_level": "local_private",
+      "notes": "无时辰版。"
+    },
+    {
+      "person_id": "P_DENG_YIAN_2018",
+      "name": "邓易安",
+      "gender": "male",
+      "birth": {
+        "calendar_type": "solar",
+        "year": 2018,
+        "month": 4,
+        "day": 5,
+        "is_leap_lunar_month": null,
+        "time_text": "05:25",
+        "hour_branch": "卯/寅",
+        "time_accuracy": "boundary",
+        "timezone": "Asia/Shanghai"
+      },
+      "birthplace": {
+        "raw": "陕西省西安市雁塔区西北妇幼保健院",
+        "country": "中国",
+        "province": "陕西省",
+        "city": "西安市",
+        "county_or_district": "雁塔区",
+        "town": null,
+        "village": null,
+        "longitude": null,
+        "latitude": null
+      },
+      "known_chart": {
+        "solar_date": "2018-04-05",
+        "bazi_core": "北京时间：戊戌年、丙辰月、丁卯日、癸卯时；真太阳时可能为壬寅时",
+        "day_master": "丁火",
+        "model_name": "木火聪敏型、敏感启发型、规则引导型"
+      },
+      "privacy_level": "local_private",
+      "notes": "用户最终纠正为阳历2018-04-05。"
+    },
+    {
+      "person_id": "P_MA_ZONGPING_1963",
+      "name": "马宗平",
+      "gender": "male",
+      "birth": {
+        "calendar_type": "lunar",
+        "year": 1963,
+        "month": 9,
+        "day": 15,
+        "is_leap_lunar_month": null,
+        "time_text": null,
+        "hour_branch": null,
+        "time_accuracy": "unknown",
+        "timezone": "Asia/Shanghai"
+      },
+      "birthplace": {
+        "raw": "陕西省宝鸡市陈仓区周原镇马家沟村",
+        "country": "中国",
+        "province": "陕西省",
+        "city": "宝鸡市",
+        "county_or_district": "陈仓区",
+        "town": "周原镇",
+        "village": "马家沟村",
+        "longitude": null,
+        "latitude": null
+      },
+      "known_chart": {
+        "solar_date": "1963-10-31",
+        "bazi_core": "癸卯年、壬戌月、丁未日",
+        "day_master": "丁火",
+        "model_name": "丁火承压型、官杀透出型、内韧积累型"
+      },
+      "privacy_level": "local_private",
+      "notes": "无时辰版。"
+    },
+    {
+      "person_id": "P_ZHANG_GUAIPING_1965_NEW",
+      "name": "张乖平",
+      "gender": "male",
+      "birth": {
+        "calendar_type": "lunar",
+        "year": 1965,
+        "month": 10,
+        "day": 29,
+        "is_leap_lunar_month": null,
+        "time_text": null,
+        "hour_branch": null,
+        "time_accuracy": "unknown",
+        "timezone": "Asia/Shanghai"
+      },
+      "birthplace": {
+        "raw": "陕西省宝鸡市陈仓区周原镇营子头村15组",
+        "country": "中国",
+        "province": "陕西省",
+        "city": "宝鸡市",
+        "county_or_district": "陈仓区",
+        "town": "周原镇",
+        "village": "营子头村15组",
+        "longitude": null,
+        "latitude": null
+      },
+      "known_chart": {
+        "solar_date": "1965-11-21",
+        "bazi_core": "乙巳年、丁亥月、己卯日",
+        "day_master": "己土",
+        "model_name": "寒土逢水、杀印相生、巳亥冲动、责任成局型"
+      },
+      "privacy_level": "local_private",
+      "notes": "用户最新修正版本；前文旧日期农历1965年12月8日应作为历史版本，不作为当前主档。"
+    },
+    {
+      "person_id": "P_DENG_YAN_1991",
+      "name": "邓焱",
+      "gender": "male",
+      "birth": {
+        "calendar_type": "lunar",
+        "year": 1991,
+        "month": 4,
+        "day": 9,
+        "is_leap_lunar_month": null,
+        "time_text": "子时",
+        "hour_branch": "子",
+        "time_accuracy": "boundary",
+        "timezone": "Asia/Shanghai"
+      },
+      "birthplace": {
+        "raw": "陕西省山阳县西照川镇碾子坪村石佛寺乡碾子坪村湾子组",
+        "country": "中国",
+        "province": "陕西省",
+        "city": "商洛市",
+        "county_or_district": "山阳县",
+        "town": "西照川镇",
+        "village": "碾子坪村湾子组",
+        "longitude": null,
+        "latitude": null
+      },
+      "known_chart": {
+        "solar_date": "1991-05-22",
+        "bazi_core": "辛未年、癸巳月、壬辰日；子时需早子夜子和真太阳时校验",
+        "day_master": "壬水",
+        "model_name": "壬水受火型、财旺压身型、流动成事型"
+      },
+      "privacy_level": "local_private",
+      "notes": "子时边界需细校。"
+    },
+    {
+      "person_id": "P_DENG_XIULONG_1962",
+      "name": "邓秀龙",
+      "gender": "male",
+      "birth": {
+        "calendar_type": "lunar",
+        "year": 1962,
+        "month": 9,
+        "day": 14,
+        "is_leap_lunar_month": null,
+        "time_text": "早上9点",
+        "hour_branch": "巳/辰",
+        "time_accuracy": "boundary",
+        "timezone": "Asia/Shanghai"
+      },
+      "birthplace": {
+        "raw": "陕西省商洛市山阳县中村镇",
+        "country": "中国",
+        "province": "陕西省",
+        "city": "商洛市",
+        "county_or_district": "山阳县",
+        "town": "中村镇",
+        "village": null,
+        "longitude": null,
+        "latitude": null
+      },
+      "known_chart": {
+        "solar_date": "1962-10-12",
+        "bazi_core": "壬寅年、庚戌月、癸未日；北京时间早9点为丁巳时，真太阳时可能仍在辰时尾段",
+        "day_master": "癸水",
+        "model_name": "癸水承压、官印相生、财官并临、晚年再起型"
+      },
+      "privacy_level": "local_private",
+      "notes": "早上9点处于辰巳边界，需要校时。"
+    },
+    {
+      "person_id": "P_JIANG_JINGYING_1968",
+      "name": "蒋景英",
+      "gender": "female",
+      "birth": {
+        "calendar_type": "lunar",
+        "year": 1968,
+        "month": 2,
+        "day": 14,
+        "is_leap_lunar_month": null,
+        "time_text": "晚上9-10点",
+        "hour_branch": "亥/戌",
+        "time_accuracy": "boundary",
+        "timezone": "Asia/Shanghai"
+      },
+      "birthplace": {
+        "raw": "陕西省商洛市山阳县西照川镇石佛寺乡大洼岭村寺沟河组",
+        "country": "中国",
+        "province": "陕西省",
+        "city": "商洛市",
+        "county_or_district": "山阳县",
+        "town": "西照川镇",
+        "village": "大洼岭村寺沟河组",
+        "longitude": null,
+        "latitude": null
+      },
+      "known_chart": {
+        "solar_date": "1968-03-12",
+        "bazi_core": "戊申年、乙卯月、辛巳日；北京时间为己亥时，真太阳时若接近21点可能为戌时",
+        "day_master": "辛金",
+        "model_name": "辛金逢春型、财旺身受压型、印星护身型"
+      },
+      "privacy_level": "local_private",
+      "notes": "时辰边界需细校。"
+    },
+    {
+      "person_id": "P_LIU_FURONG_1961",
+      "name": "刘福荣",
+      "gender": "male",
+      "birth": {
+        "calendar_type": "solar",
+        "year": 1961,
+        "month": 9,
+        "day": 27,
+        "is_leap_lunar_month": null,
+        "time_text": null,
+        "hour_branch": null,
+        "time_accuracy": "unknown",
+        "timezone": "Asia/Hong_Kong"
+      },
+      "birthplace": {
+        "raw": "中国香港",
+        "country": "中国",
+        "province": "香港",
+        "city": "香港",
+        "county_or_district": null,
+        "town": null,
+        "village": null,
+        "longitude": null,
+        "latitude": null
+      },
+      "known_chart": {
+        "solar_date": "1961-09-27",
+        "bazi_core": "辛丑年、丁酉月、癸亥日",
+        "day_master": "癸水",
+        "model_name": "癸水得印型、金水偏旺型、财星透月型、晚年重疏导型"
+      },
+      "privacy_level": "local_private",
+      "notes": "无时辰版；出生地为香港，时区与经度需单独记录。"
+    }
+  ],
+  "knowledge_rules_seed": [
+    {
+      "rule_id": "R_BAZI_PRIMARY",
+      "system": "bazi",
+      "topic": "四柱主骨",
+      "rule_summary": "出生报告以四柱八字为主骨，先校节气、时辰、日主、月令，再进入格局与用忌。",
+      "usage_scope": "所有出生命盘报告",
+      "priority": "core",
+      "conflict_policy": "若其他术数与四柱主轴冲突，以四柱排盘校验后的稳定结论为主。"
+    },
+    {
+      "rule_id": "R_TRUE_SOLAR_TIME",
+      "system": "general",
+      "topic": "真太阳时校验",
+      "rule_summary": "出生地远离东经120度或出生时间靠近时辰边界时，必须标注真太阳时可能造成的时柱变化。",
+      "usage_scope": "有时辰且靠边界的命盘",
+      "priority": "core",
+      "conflict_policy": "同时保留北京时间盘和真太阳时备选盘，等待人生事件校验。"
+    },
+    {
+      "rule_id": "R_NO_HOUR_DOWNGRADE",
+      "system": "general",
+      "topic": "无时辰降级",
+      "rule_summary": "无时辰盘只能稳定判断年、月、日三柱，子女、晚年、隐性性格、健康细节与具体应期必须降级。",
+      "usage_scope": "无时辰报告",
+      "priority": "core",
+      "conflict_policy": "不得把无时辰盘写成完整四柱盘。"
+    },
+    {
+      "rule_id": "R_QIMEN_SCOPE",
+      "system": "qimen",
+      "topic": "奇门适用范围",
+      "rule_summary": "奇门遁甲用于问事、择时、方位与行动策略，不直接替代出生命盘。",
+      "usage_scope": "具体问题咨询",
+      "priority": "auxiliary",
+      "conflict_policy": "无明确问题和起局时间时不启用奇门断事。"
+    },
+    {
+      "rule_id": "R_MEIHUA_LIUYAO_SCOPE",
+      "system": "meihua",
+      "topic": "梅花六爻适用范围",
+      "rule_summary": "梅花易数和六爻用于一事一问，需要起卦触机、时间或摇卦结果，不作为出生盘主结构。",
+      "usage_scope": "具体事件预测",
+      "priority": "auxiliary",
+      "conflict_policy": "泛泛人生总论不用梅花或六爻替代四柱。"
+    }
+  ]
+}
+
