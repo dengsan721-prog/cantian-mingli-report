@@ -1,0 +1,17 @@
+# Wikidata public people seed query
+# Purpose: collect public person index fields for validation dataset.
+# Notes:
+# - This query is intentionally small; production should page by QID ranges or dump processing.
+# - Wikidata structured data is CC0, but downstream event text must obey its own source license.
+
+SELECT ?person ?personLabel ?dob ?dod ?birthPlaceLabel ?occupationLabel ?countryLabel WHERE {
+  ?person wdt:P31 wd:Q5.
+  OPTIONAL { ?person wdt:P569 ?dob. }
+  OPTIONAL { ?person wdt:P570 ?dod. }
+  OPTIONAL { ?person wdt:P19 ?birthPlace. }
+  OPTIONAL { ?person wdt:P106 ?occupation. }
+  OPTIONAL { ?person wdt:P27 ?country. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "zh,en". }
+}
+LIMIT 1000
+

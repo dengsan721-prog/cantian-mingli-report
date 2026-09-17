@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "description": "理论规则验证输入输出契约。",
+  "input": {
+    "rule_id": "string",
+    "rule_statement": "string",
+    "applicable_conditions": "array",
+    "forbidden_conditions": "array",
+    "chart_snapshot": "object",
+    "life_events": "array"
+  },
+  "output": {
+    "match_level": "hit | partial_hit | miss | reverse_hit | not_enough_data",
+    "evidence_event_ids": "array",
+    "mismatch_reason": "string | null",
+    "confidence": "high | medium | low",
+    "recommended_rule_update": {
+      "action": "keep | lower_confidence | add_condition | split_rule | retire_rule",
+      "reason": "string"
+    }
+  },
+  "quality_notes": [
+    "低精度出生资料不能验证高精度规则。",
+    "没有明确年份的人生事件不能验证应期。",
+    "单个案例不能推翻规则，只能生成待复核偏差。",
+    "大样本统计不能替代个体报告的现实变量分析。"
+  ]
+}
+

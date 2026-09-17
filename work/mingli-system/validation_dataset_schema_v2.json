@@ -1,0 +1,159 @@
+{
+  "database_name": "mingli_validation_dataset",
+  "version": "2.0.0",
+  "scale_target": 10000000,
+  "description": "1000万人公开人物样本验证库结构。用于公开人物资料索引、命盘计算、人生事件抽取、规则验证、理论偏差纠正。",
+  "collections": {
+    "source_registry": {
+      "description": "数据来源登记。",
+      "fields": {
+        "source_id": "string, unique",
+        "name": "string",
+        "url": "string | null",
+        "license": "CC0 | CC-BY | CC-BY-SA | public_domain | unknown | restricted",
+        "source_type": "structured_data | encyclopedia | biography | archive | news | user_feedback | other",
+        "allowed_fields": "array",
+        "forbidden_fields": "array",
+        "trust_level": "A | B | C | D",
+        "refresh_cycle": "manual | daily | weekly | monthly | yearly",
+        "notes": "string"
+      }
+    },
+    "public_persons": {
+      "description": "公开人物基础索引。",
+      "fields": {
+        "public_person_id": "string, unique",
+        "external_ids": {
+          "wikidata_qid": "string | null",
+          "wikipedia_page_id": "string | null",
+          "viaf": "string | null",
+          "isni": "string | null",
+          "other": "object"
+        },
+        "names": {
+          "primary_name": "string",
+          "native_name": "string | null",
+          "aliases": "array",
+          "language_labels": "object"
+        },
+        "is_living": "boolean | null",
+        "notability": {
+          "occupations": "array",
+          "fields": "array",
+          "country_or_region": "array"
+        },
+        "privacy_class": "public_figure | historical_figure | ordinary_person_excluded",
+        "source_ids": "array",
+        "quality_level": "L0 | L1 | L2 | L3 | L4",
+        "created_at": "string",
+        "updated_at": "string"
+      }
+    },
+    "birth_facts": {
+      "description": "出生事实及其来源。",
+      "fields": {
+        "birth_fact_id": "string, unique",
+        "public_person_id": "string",
+        "raw_birth_text": "string | null",
+        "date_standard": "string | null",
+        "date_precision": "year | month | day | hour | unknown",
+        "calendar_type": "solar | lunar | unknown",
+        "time_text": "string | null",
+        "time_precision": "exact | approximate | unknown",
+        "place_raw": "string | null",
+        "place_standard": "object",
+        "longitude": "number | null",
+        "latitude": "number | null",
+        "timezone": "string | null",
+        "source_url": "string | null",
+        "source_id": "string",
+        "conflict_group_id": "string | null",
+        "confidence": "high | medium | low"
+      }
+    },
+    "life_events_public": {
+      "description": "公开人生事件。",
+      "fields": {
+        "event_id": "string, unique",
+        "public_person_id": "string",
+        "event_type": "career | marriage | childbirth | migration | award | office | wealth | illness_public | death | controversy | education | publication | other",
+        "event_date": "string | null",
+        "event_precision": "year | month | day | unknown",
+        "event_summary": "string",
+        "source_url": "string | null",
+        "source_id": "string",
+        "evidence_quote_short": "string | null",
+        "confidence": "high | medium | low",
+        "sensitivity": "low | medium | high",
+        "allowed_for_modeling": "boolean"
+      }
+    },
+    "chart_snapshots_public": {
+      "description": "公开人物命盘快照。",
+      "fields": {
+        "chart_snapshot_id": "string, unique",
+        "public_person_id": "string",
+        "calculation_level": "three_pillars | four_pillars | four_pillars_true_solar | uncertain",
+        "pillars": {
+          "year": "string | null",
+          "month": "string | null",
+          "day": "string | null",
+          "hour": "string | null"
+        },
+        "day_master": "string | null",
+        "month_command": "string | null",
+        "climate_tags": "array",
+        "ten_god_tags": "array",
+        "conflict_combination_tags": "array",
+        "confidence": "A | B | C | D",
+        "calculation_notes": "string"
+      }
+    },
+    "rule_evaluations": {
+      "description": "规则在案例上的验证结果。",
+      "fields": {
+        "evaluation_id": "string, unique",
+        "rule_id": "string",
+        "public_person_id": "string",
+        "chart_snapshot_id": "string",
+        "expected_pattern": "string",
+        "observed_events": "array",
+        "match_level": "hit | partial_hit | miss | reverse_hit | not_enough_data",
+        "mismatch_reason": "string | null",
+        "confidence": "high | medium | low",
+        "review_method": "automatic | human_reviewed | mixed",
+        "created_at": "string"
+      }
+    },
+    "bias_matrices": {
+      "description": "理论规则偏差矩阵。",
+      "fields": {
+        "matrix_id": "string, unique",
+        "rule_id": "string",
+        "sample_size": "integer",
+        "hit_rate": "number",
+        "partial_hit_rate": "number",
+        "miss_rate": "number",
+        "reverse_hit_rate": "number",
+        "not_enough_data_rate": "number",
+        "stable_conditions": "array",
+        "failure_conditions": "array",
+        "recommended_report_policy": "string",
+        "updated_at": "string"
+      }
+    },
+    "model_feedback_updates": {
+      "description": "规则偏差反哺报告引擎的记录。",
+      "fields": {
+        "update_id": "string, unique",
+        "rule_id": "string",
+        "before_policy": "object",
+        "after_policy": "object",
+        "reason": "string",
+        "supporting_matrix_ids": "array",
+        "created_at": "string"
+      }
+    }
+  }
+}
+
