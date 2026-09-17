@@ -1,0 +1,84 @@
+{
+  "database_name": "mingli_system_database",
+  "version": "1.0.0",
+  "purpose": "资料来源登记表。用于记录可参考的经典、开放网页、现代资料和待审案例来源。入库时只保存摘要、规则与来源链接，不保存大段受版权保护内容。",
+  "source_policy": {
+    "copyright": "不抓取、不保存现代版权书籍全文；只保存元数据、摘要和自有规则化表述。",
+    "internet_quality": "互联网信息先进入待审层，经过交叉验证和案例回验后才能升级为核心规则。",
+    "case_privacy": "用户案例默认本地私有，不公开姓名和敏感信息。"
+  },
+  "registered_sources": [
+    {
+      "source_id": "WEB_FOUR_PILLARS_OVERVIEW",
+      "title": "Four Pillars of Destiny overview",
+      "source_type": "encyclopedic_web",
+      "url": "https://en.wikipedia.org/wiki/Four_Pillars_of_Destiny",
+      "use": "用于确认四柱体系、八字结构和历史概览，不用于细断规则。",
+      "status": "reference_only"
+    },
+    {
+      "source_id": "WEB_YUANHAI_ZIPING_OVERVIEW",
+      "title": "Yuanhai Ziping overview",
+      "source_type": "encyclopedic_web",
+      "url": "https://en.wikipedia.org/wiki/Yuanhai_Ziping",
+      "use": "用于确认子平体系经典地位和章节主题，不保存原文。",
+      "status": "reference_only"
+    },
+    {
+      "source_id": "WEB_SANMING_TONGHUI_OVERVIEW",
+      "title": "三命通会概览",
+      "source_type": "encyclopedic_web",
+      "url": "https://zh.wikipedia.org/wiki/%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83",
+      "use": "用于确认集成性资料定位；具体规则需另行人工校验。",
+      "status": "reference_only"
+    },
+    {
+      "source_id": "WEB_QIONGTONG_OVERVIEW",
+      "title": "穷通宝鉴概览",
+      "source_type": "encyclopedic_web",
+      "url": "https://zh.wikipedia.org/wiki/%E7%A9%B7%E9%80%9A%E5%AE%9D%E9%91%91",
+      "use": "用于确认调候体系定位；规则需转化为寒暖燥湿模块。",
+      "status": "reference_only"
+    },
+    {
+      "source_id": "WEB_ZIWEI_WIKISOURCE",
+      "title": "紫微斗数全书",
+      "source_type": "open_text_web",
+      "url": "https://zh.wikisource.org/wiki/%E7%B4%AB%E5%BE%AE%E6%96%97%E6%95%B8%E5%85%A8%E6%9B%B8",
+      "use": "用于紫微斗数星曜和宫位规则研究；接入前需人工整理为规则摘要。",
+      "status": "candidate_for_rule_extraction"
+    },
+    {
+      "source_id": "WEB_CTEXT_ZIWEI",
+      "title": "中国哲学书电子化计划：紫微斗数",
+      "source_type": "open_text_web",
+      "url": "https://ctext.org/wiki.pl?if=gb&res=886957",
+      "use": "用于术数源流和文本校勘参考。",
+      "status": "candidate_for_rule_extraction"
+    },
+    {
+      "source_id": "PRACTICE_USER_CASES_LOCAL",
+      "title": "本地用户案例反馈",
+      "source_type": "private_case_database",
+      "url": null,
+      "use": "最高价值纠偏来源，用于校验时辰、用忌、应期和现实建议。",
+      "status": "core_feedback_source"
+    },
+    {
+      "source_id": "OPEN_WIKIDATA_CC0",
+      "title": "Wikidata open structured data",
+      "source_type": "open_structured_data",
+      "url": "https://www.wikidata.org/wiki/Wikidata:Licensing",
+      "use": "用于建立公开人物大样本校验库，优先采集结构化出生日期、出生地、职业、死亡日期、奖项等事实。",
+      "status": "candidate_for_large_scale_validation"
+    },
+    {
+      "source_id": "OPEN_WIKIDATA_SPARQL",
+      "title": "Wikidata SPARQL Query Service examples",
+      "source_type": "open_structured_data_tooling",
+      "url": "https://www.wikidata.org/wiki/Wikidata:SPARQL_query_service/queries/examples/advanced",
+      "use": "用于设计公开人物样本查询，不直接保存网页文本。",
+      "status": "candidate_for_large_scale_validation"
+    }
+  ]
+}
