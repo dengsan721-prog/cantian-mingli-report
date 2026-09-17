@@ -171,15 +171,15 @@ window.MINGLI_DATABASE_EXPORT = {
       "theory_sources": 6,
       "knowledge_rules": 8,
       "local_persons": 9,
-      "public_persons": 11643,
-      "birth_facts": 11652,
-      "chart_snapshots": 10342,
-      "life_events_public": 9614,
+      "public_persons": 25264,
+      "birth_facts": 25273,
+      "chart_snapshots": 18094,
+      "life_events_public": 21431,
       "case_studies": 3,
       "correction_records": 2,
-      "rule_evaluations": 10333,
+      "rule_evaluations": 18085,
       "bias_matrices": 1,
-      "import_batches": 491
+      "import_batches": 1075
     },
     "publicPersonQuality": [
       {
@@ -188,11 +188,11 @@ window.MINGLI_DATABASE_EXPORT = {
       },
       {
         "quality_level": "L1",
-        "person_count": 2906
+        "person_count": 11085
       },
       {
         "quality_level": "L2",
-        "person_count": 8566
+        "person_count": 14008
       }
     ],
     "birthFactPrecision": [
@@ -218,13 +218,13 @@ window.MINGLI_DATABASE_EXPORT = {
         "subject_type": "public_person",
         "date_precision": "day",
         "time_precision": "unknown",
-        "fact_count": 10333
+        "fact_count": 18085
       },
       {
         "subject_type": "public_person",
         "date_precision": "month",
         "time_precision": "unknown",
-        "fact_count": 85
+        "fact_count": 216
       },
       {
         "subject_type": "public_person",
@@ -236,7 +236,7 @@ window.MINGLI_DATABASE_EXPORT = {
         "subject_type": "public_person",
         "date_precision": "year",
         "time_precision": "unknown",
-        "fact_count": 1054
+        "fact_count": 6792
       }
     ]
   }

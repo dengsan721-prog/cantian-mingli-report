@@ -6,6 +6,7 @@ import sqlite3
 import time
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from urllib.error import HTTPError
 from pathlib import Path
 from typing import Any
@@ -71,8 +72,12 @@ def api_get(params: dict[str, str], retries: int = 6, pause: float = 0.5) -> dic
 
 def fetch_entities(qids: list[str], props: str = "labels|claims") -> dict[str, Any]:
     payload: dict[str, Any] = {"entities": {}}
-    for batch in chunks(qids, 50):
-        data = api_get(
+    batches = chunks(qids, 50)
+    if not batches:
+        return payload
+
+    def fetch_batch(batch: list[str]) -> dict[str, Any]:
+        return api_get(
             {
                 "action": "wbgetentities",
                 "ids": "|".join(batch),
@@ -82,7 +87,10 @@ def fetch_entities(qids: list[str], props: str = "labels|claims") -> dict[str, A
                 "format": "json",
             }
         )
-        payload["entities"].update(data.get("entities", {}))
+
+    with ThreadPoolExecutor(max_workers=min(8, len(batches))) as executor:
+        for data in executor.map(fetch_batch, batches):
+            payload["entities"].update(data.get("entities", {}))
     return payload
 
 

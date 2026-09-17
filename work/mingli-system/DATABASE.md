@@ -14,6 +14,8 @@
 - `scripts/import_wikidata_entities.py`：通过 Wikidata API 按 QID 导入公开人物实体、职业、国家、死亡事件。
 - `scripts/import_wikipedia_birth_year.py`：从 Wikipedia 出生年份分类扩展公开人物 QID，再导入 Wikidata 实体。
 - `scripts/import_wikipedia_year_range.py`：按出生年份范围限速扩展样本，失败记录到导入批次表。
+- `scripts/import_wikipedia_year_range_bulk.py`：并发查询出生年份、分块顺序入库，并支持断点续跑和 Wikidata 日期索引模式。
+- `scripts/audit_year_coverage.py`：审计指定年份范围的连续覆盖、缺失年份和每年记录量。
 - `scripts/calculate_chart_snapshots.py`：根据出生事实生成三柱级命盘快照。
 - `scripts/evaluate_quality_rules.py`：生成初始规则验证记录和偏差矩阵。
 - `scripts/rebuild_database.py`：一键重建数据库，串起初始化、导入、快照、评估和校验。
@@ -76,6 +78,20 @@
 ```
 
 如果遇到 429 限流，脚本会退避等待，并把失败年份写入 `import_batches`，方便后续继续。
+
+大范围批量扩展与断点续跑：
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\import_wikipedia_year_range_bulk.py --start-year 1000 --end-year 1549 --limit 25 --workers 6 --years-per-import 25 --fetch-source wikidata --reuse-cache
+```
+
+年度连续性审计：
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\audit_year_coverage.py --start-year 1000 --end-year 2007
+```
+
+当前个人级公开样本连续覆盖 1000—2007 年；2008 年以后涉及大量未成年人，不纳入个人级命理训练库。
 
 ## 生成命盘快照
 
