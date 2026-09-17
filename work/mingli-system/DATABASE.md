@@ -10,6 +10,7 @@
 
 - `database/schema.sql`：正式表结构。
 - `scripts/init_database.py`：初始化数据库并导入种子数据。
+- `scripts/import_wikidata_seed.py`：从 Wikidata 导入公开人物种子样本。
 - `data/mingli_validation.db`：本地 SQLite 数据库，由初始化脚本生成。
 
 ## 初始化
@@ -26,6 +27,19 @@
 - 案例实践：邓焱、邓秀龙、张乖平等已出报告案例。
 - 纠偏记录：张乖平生日修正、邓秀龙时辰补充。
 - 质检模板：最高规格报告出具前检查项。
+- 公开人物种子样本：已导入第一批 Wikidata 固定 QID 样本，用于验证公开样本管线。
+
+## 导入公开人物种子
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\import_wikidata_seed.py
+```
+
+说明：
+
+- 首批使用固定 QID 种子查询，避免在线 SPARQL 全库扫描过慢。
+- 大规模 1000 万级采集不应依赖在线 SPARQL 全库查询，应使用 Wikidata dump 或分批索引策略。
+- 当前导入写入 `public_persons`、`birth_facts` 和 `import_batches`。
 
 ## 设计边界
 
@@ -33,4 +47,3 @@
 - 仓库保存 schema、脚本、小样本和本地验证库。
 - 真正大规模采集应使用分批导入、外部存储和可复算流水线。
 - 低精度公开样本只做宏观统计，不用于精细断事。
-

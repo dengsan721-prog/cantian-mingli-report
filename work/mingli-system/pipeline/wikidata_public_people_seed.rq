@@ -4,14 +4,32 @@
 # - This query is intentionally small; production should page by QID ranges or dump processing.
 # - Wikidata structured data is CC0, but downstream event text must obey its own source license.
 
-SELECT ?person ?personLabel ?dob ?dod ?birthPlaceLabel ?occupationLabel ?countryLabel WHERE {
-  ?person wdt:P31 wd:Q5.
-  OPTIONAL { ?person wdt:P569 ?dob. }
+SELECT ?person ?personLabel ?dob ?dod ?birthPlaceLabel WHERE {
+  VALUES ?person {
+    wd:Q42
+    wd:Q76
+    wd:Q22686
+    wd:Q937
+    wd:Q7186
+    wd:Q935
+    wd:Q517
+    wd:Q762
+    wd:Q1035
+    wd:Q91
+    wd:Q692
+    wd:Q5816
+    wd:Q5284
+    wd:Q19837
+    wd:Q317521
+    wd:Q26876
+    wd:Q41421
+    wd:Q7747
+    wd:Q9682
+    wd:Q7200
+  }
+  ?person wdt:P569 ?dob.
   OPTIONAL { ?person wdt:P570 ?dod. }
   OPTIONAL { ?person wdt:P19 ?birthPlace. }
-  OPTIONAL { ?person wdt:P106 ?occupation. }
-  OPTIONAL { ?person wdt:P27 ?country. }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "zh,en". }
 }
-LIMIT 1000
-
+LIMIT 100
