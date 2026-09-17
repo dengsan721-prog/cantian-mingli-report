@@ -13,6 +13,8 @@
 - `scripts/import_wikidata_seed.py`：从 Wikidata 导入公开人物种子样本。
 - `scripts/import_wikidata_entities.py`：通过 Wikidata API 按 QID 导入公开人物实体、职业、国家、死亡事件。
 - `scripts/calculate_chart_snapshots.py`：根据出生事实生成三柱级命盘快照。
+- `scripts/evaluate_quality_rules.py`：生成初始规则验证记录和偏差矩阵。
+- `scripts/rebuild_database.py`：一键重建数据库，串起初始化、导入、快照、评估和校验。
 - `scripts/db_stats.py`：输出数据库统计。
 - `scripts/validate_database.py`：校验表结构、JSON 字段和外键。
 - `data/mingli_validation.db`：本地 SQLite 数据库，由初始化脚本生成。
@@ -21,6 +23,18 @@
 
 ```powershell
 & 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\init_database.py --reset
+```
+
+## 一键重建
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\rebuild_database.py
+```
+
+如果当前网络无法访问 Wikidata，可先跳过公开人物导入：
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\rebuild_database.py --skip-wikidata
 ```
 
 ## 当前已入库内容
@@ -59,6 +73,14 @@
 & 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\validate_database.py
 & 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\db_stats.py
 ```
+
+## 规则验证与偏差矩阵
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\evaluate_quality_rules.py
+```
+
+当前第一条自动验证规则是“无时辰公开样本必须降级”。它不验证命理结论本身，而是验证数据库不会把低精度样本误用于精细判断。
 
 ## 设计边界
 
