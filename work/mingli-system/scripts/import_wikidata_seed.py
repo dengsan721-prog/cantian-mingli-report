@@ -67,9 +67,9 @@ def date_precision(value: str | None) -> str:
     if not value:
         return "unknown"
     clean = normalize_date(value) or ""
-    if len(clean) >= 10 and clean[4] == "-" and clean[7] == "-":
+    if len(clean) >= 10 and clean[4] == "-" and clean[7] == "-" and clean[5:7] != "00" and clean[8:10] != "00":
         return "day"
-    if len(clean) >= 7 and clean[4] == "-":
+    if len(clean) >= 7 and clean[4] == "-" and clean[5:7] != "00":
         return "month"
     if len(clean) >= 4:
         return "year"

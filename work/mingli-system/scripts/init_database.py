@@ -10,6 +10,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB = ROOT / "data" / "mingli_validation.db"
 SCHEMA = ROOT / "database" / "schema.sql"
+VIEWS = ROOT / "database" / "views.sql"
 
 
 def read_json(path: Path) -> Any:
@@ -23,6 +24,7 @@ def dump(value: Any) -> str:
 
 def execute_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA.read_text(encoding="utf-8"))
+    conn.executescript(VIEWS.read_text(encoding="utf-8"))
     conn.execute(
         "INSERT OR REPLACE INTO metadata(key, value) VALUES (?, ?)",
         ("database_version", "2.0.0"),
@@ -319,4 +321,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -11,6 +11,10 @@
 - `database/schema.sql`：正式表结构。
 - `scripts/init_database.py`：初始化数据库并导入种子数据。
 - `scripts/import_wikidata_seed.py`：从 Wikidata 导入公开人物种子样本。
+- `scripts/import_wikidata_entities.py`：通过 Wikidata API 按 QID 导入公开人物实体、职业、国家、死亡事件。
+- `scripts/calculate_chart_snapshots.py`：根据出生事实生成三柱级命盘快照。
+- `scripts/db_stats.py`：输出数据库统计。
+- `scripts/validate_database.py`：校验表结构、JSON 字段和外键。
 - `data/mingli_validation.db`：本地 SQLite 数据库，由初始化脚本生成。
 
 ## 初始化
@@ -40,6 +44,21 @@
 - 首批使用固定 QID 种子查询，避免在线 SPARQL 全库扫描过慢。
 - 大规模 1000 万级采集不应依赖在线 SPARQL 全库查询，应使用 Wikidata dump 或分批索引策略。
 - 当前导入写入 `public_persons`、`birth_facts` 和 `import_batches`。
+
+## 生成命盘快照
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\calculate_chart_snapshots.py
+```
+
+当前快照只生成三柱级信息。无时辰样本不会进入时柱、大运应期等精细验证。
+
+## 巡检
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\validate_database.py
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\db_stats.py
+```
 
 ## 设计边界
 
