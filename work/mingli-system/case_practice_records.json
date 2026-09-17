@@ -1,0 +1,127 @@
+{
+  "database_name": "mingli_system_database",
+  "version": "1.0.0",
+  "purpose": "案例实践与纠偏库。用于保存已出报告、命局模型、待验证事项和用户反馈，后续生成报告时作为参考与纠偏依据。",
+  "case_studies": [
+    {
+      "case_id": "CASE_DENG_YAN_1991",
+      "person_id": "P_DENG_YAN_1991",
+      "name": "邓焱",
+      "chart_snapshot": {
+        "birth": "农历1991年4月9日，子时",
+        "birthplace": "陕西省山阳县西照川镇碾子坪村一带",
+        "solar_date": "1991-05-22",
+        "core_pillars": "辛未年、癸巳月、壬辰日；子时待校",
+        "day_master": "壬水"
+      },
+      "model_tags": ["壬水受火", "财旺压身", "以动求财", "时辰边界"],
+      "report_ids": ["WRITING_41869"],
+      "known_life_events": [],
+      "validation_status": "unverified",
+      "lessons": [
+        "子时案例必须区分早子夜子和真太阳时。",
+        "财旺压身类报告应重点写财务边界、合伙风险和身体透支。"
+      ],
+      "similarity_keys": ["壬水日主", "巳月", "财旺", "子时边界"]
+    },
+    {
+      "case_id": "CASE_DENG_XIULONG_1962",
+      "person_id": "P_DENG_XIULONG_1962",
+      "name": "邓秀龙",
+      "chart_snapshot": {
+        "birth": "农历1962年9月14日，早上9点",
+        "birthplace": "陕西省商洛市山阳县中村镇",
+        "solar_date": "1962-10-12",
+        "core_pillars": "壬寅年、庚戌月、癸未日；北京时间丁巳时，真太阳时可能辰时尾",
+        "day_master": "癸水"
+      },
+      "model_tags": ["癸水承压", "官印相生", "财官并临", "辰巳边界"],
+      "report_ids": ["WRITING_93684"],
+      "known_life_events": [],
+      "validation_status": "unverified",
+      "lessons": [
+        "早上9点在陕西出生地可能触发辰巳边界，必须双盘提示。",
+        "老年段报告要把财务安排、子女边界、健康节奏分开写。"
+      ],
+      "similarity_keys": ["癸水日主", "戌月", "官杀土重", "巳时边界"]
+    },
+    {
+      "case_id": "CASE_ZHANG_GUAIPING_1965_NEW",
+      "person_id": "P_ZHANG_GUAIPING_1965_NEW",
+      "name": "张乖平",
+      "chart_snapshot": {
+        "birth": "农历1965年10月29日，时辰不详",
+        "birthplace": "陕西省宝鸡市陈仓区周原镇营子头村15组",
+        "solar_date": "1965-11-21",
+        "core_pillars": "乙巳年、丁亥月、己卯日",
+        "day_master": "己土"
+      },
+      "model_tags": ["寒土逢水", "杀印相生", "巳亥冲动", "无时辰"],
+      "report_ids": ["WRITING_57162"],
+      "known_life_events": [],
+      "validation_status": "unverified",
+      "lessons": [
+        "用户修正生日后必须废弃旧主盘，保留旧盘为历史版本。",
+        "无时辰盘要明确降级，不强断子女与晚年细节。"
+      ],
+      "similarity_keys": ["己土日主", "亥月", "寒湿", "无时辰"]
+    }
+  ],
+  "correction_records": [
+    {
+      "correction_id": "CORR_ZHANG_GUAIPING_DATE_001",
+      "person_id": "P_ZHANG_GUAIPING_1965_NEW",
+      "case_id": "CASE_ZHANG_GUAIPING_1965_NEW",
+      "correction_type": "birth_date_change",
+      "before": {
+        "birth": "农历1965年12月8日",
+        "chart": "乙巳年、戊子月、戊午日"
+      },
+      "after": {
+        "birth": "农历1965年10月29日",
+        "chart": "乙巳年、丁亥月、己卯日"
+      },
+      "reason": "用户后续提供新日期，应按最新资料重排。",
+      "impact": "日主、月令、命局模型全部变化，旧报告不可继续作为主报告使用。",
+      "created_at": "2026-09-17"
+    },
+    {
+      "correction_id": "CORR_DENG_XIULONG_HOUR_001",
+      "person_id": "P_DENG_XIULONG_1962",
+      "case_id": "CASE_DENG_XIULONG_1962",
+      "correction_type": "birth_time_change",
+      "before": {
+        "birth_time": "未提供",
+        "chart": "壬寅年、庚戌月、癸未日"
+      },
+      "after": {
+        "birth_time": "早上9点",
+        "chart": "壬寅年、庚戌月、癸未日、丁巳时；真太阳时可能辰时"
+      },
+      "reason": "用户补充早上9点。",
+      "impact": "晚年、子女、财务和健康细节可提高精度，但须保留辰巳边界。",
+      "created_at": "2026-09-17"
+    }
+  ],
+  "report_quality_checks": [
+    {
+      "check_id": "QC_STANDARD_FULL_REPORT_V1",
+      "report_id": null,
+      "person_id": "template",
+      "items": {
+        "calendar_checked": true,
+        "leap_month_checked": true,
+        "jieqi_checked": true,
+        "true_solar_time_checked": true,
+        "hour_boundary_checked": true,
+        "confidence_marked": true,
+        "downgraded_sections_marked": true,
+        "expert_questions_included": true,
+        "action_plan_included": true
+      },
+      "quality_grade": "A",
+      "notes": "最高规格报告必须全部检查；缺一项则降级。"
+    }
+  ]
+}
+

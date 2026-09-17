@@ -1,0 +1,136 @@
+{
+  "database_name": "mingli_system_database",
+  "version": "1.0.0",
+  "purpose": "理论规则库。将传统命理常用理法转化为可调用规则，用于生成报告、专家质询和案例纠偏。仅保存摘要与规则，不保存古籍长篇原文。",
+  "theory_sources": [
+    {
+      "source_id": "SRC_BAZI_FOUNDATION",
+      "tradition": "bazi",
+      "source_type": "classic",
+      "topic": "子平法基础",
+      "summary": "以日主为中心，结合月令、十神、格局、用忌、岁运判断人生结构。",
+      "applicable_modules": ["命局骨架", "十神结构", "格局层次", "大运流年"],
+      "limitations": "必须先校准历法、节气和时辰；不可脱离月令孤立断神煞。"
+    },
+    {
+      "source_id": "SRC_CLIMATE_ADJUSTMENT",
+      "tradition": "bazi",
+      "source_type": "classic",
+      "topic": "调候寒暖燥湿",
+      "summary": "命局不只看五行数量，还要看出生季节形成的寒暖燥湿。寒命重火暖，燥命重水润，湿土重火土，燥土重水木。",
+      "applicable_modules": ["五行气势", "健康象意", "行动方案", "环境调衡"],
+      "limitations": "调候不能取代格局、强弱和现实事件校验。"
+    },
+    {
+      "source_id": "SRC_PATTERN_LEVEL",
+      "tradition": "bazi",
+      "source_type": "classic",
+      "topic": "格局成败救应",
+      "summary": "观察命局是否形成清晰主轴，是否有破坏，是否有通关、制化、护身、暖局等救应。",
+      "applicable_modules": ["格局层次", "综合层级判断", "专家质询"],
+      "limitations": "格局名目不应机械套用，需结合月令和整体气势。"
+    },
+    {
+      "source_id": "SRC_TIMING_LUCK",
+      "tradition": "bazi",
+      "source_type": "practice_note",
+      "topic": "大运流年应期",
+      "summary": "大运看阶段主题，流年看触发点；应事需要结合原局冲合刑害和真实人生事件回验。",
+      "applicable_modules": ["大运时间轴", "流年重点", "案例纠偏"],
+      "limitations": "无时辰、起运年龄不准、人生事件缺失时，应期精度必须降级。"
+    },
+    {
+      "source_id": "SRC_ZIWEI_SCOPE",
+      "tradition": "ziwei",
+      "source_type": "system_rule",
+      "topic": "紫微斗数接入边界",
+      "summary": "紫微适合分析命宫、身宫和十二宫结构，但必须有可靠出生时辰。",
+      "applicable_modules": ["辅助术数", "专家质询"],
+      "limitations": "无时辰不启用完整紫微盘。"
+    },
+    {
+      "source_id": "SRC_DIVINATION_SCOPE",
+      "tradition": "qimen",
+      "source_type": "system_rule",
+      "topic": "问事术数接入边界",
+      "summary": "奇门、梅花、六爻适合具体问题、起局时间、起卦触机，不直接替代出生盘。",
+      "applicable_modules": ["问事", "择时", "行动策略"],
+      "limitations": "没有明确问题时不混入人生总论。"
+    }
+  ],
+  "knowledge_rules": [
+    {
+      "rule_id": "KR_001_MONTH_COMMAND_FIRST",
+      "system": "bazi",
+      "topic": "月令优先",
+      "rule_summary": "先看月令定气候和旺衰，再看天干透出与地支藏干。",
+      "usage_scope": "所有八字报告",
+      "priority": "core",
+      "conflict_policy": "若五行数量与月令气势冲突，以月令气势为先，再结合通根和透干修正。"
+    },
+    {
+      "rule_id": "KR_002_NO_HOUR_NO_FULL_DETAIL",
+      "system": "general",
+      "topic": "无时辰降级",
+      "rule_summary": "无时辰盘不得强断子女、晚年、隐性性格和精确应期。",
+      "usage_scope": "无时辰或时辰不详",
+      "priority": "core",
+      "conflict_policy": "所有相关段落必须标注为趋势判断。"
+    },
+    {
+      "rule_id": "KR_003_TRUE_SOLAR_BOUNDARY",
+      "system": "general",
+      "topic": "真太阳时边界",
+      "rule_summary": "出生时间靠近时辰边界，或出生地经度与东经120度差距较大时，必须保留备选时柱。",
+      "usage_scope": "有时辰报告",
+      "priority": "core",
+      "conflict_policy": "先输出北京时间主盘，再列真太阳时可能变化，等待人生事件校验。"
+    },
+    {
+      "rule_id": "KR_004_LUNAR_LEAP_MONTH",
+      "system": "general",
+      "topic": "农历闰月",
+      "rule_summary": "农历生日未说明闰月时，默认按非闰月处理，但必须列为待确认。",
+      "usage_scope": "农历输入",
+      "priority": "core",
+      "conflict_policy": "若后续确认闰月，必须重排并生成纠偏记录。"
+    },
+    {
+      "rule_id": "KR_005_CASE_VERIFICATION",
+      "system": "general",
+      "topic": "案例回验",
+      "rule_summary": "报告应通过婚育、迁移、事业、破财、疾病、亲人事件等真实节点反推喜忌。",
+      "usage_scope": "精修版报告",
+      "priority": "core",
+      "conflict_policy": "若真实事件与初断矛盾，应优先修正模型标签和用忌，不维持原断。"
+    },
+    {
+      "rule_id": "KR_006_HEALTH_SAFETY",
+      "system": "general",
+      "topic": "健康边界",
+      "rule_summary": "健康段只作传统象意和生活系统提示，不作医学诊断。",
+      "usage_scope": "所有报告",
+      "priority": "core",
+      "conflict_policy": "出现具体症状、诊断、用药问题时，应建议就医或以医学检查为准。"
+    },
+    {
+      "rule_id": "KR_007_FINANCE_SAFETY",
+      "system": "general",
+      "topic": "财务边界",
+      "rule_summary": "财运段可以提示风险、习惯和边界，不给确定性投资建议。",
+      "usage_scope": "所有报告",
+      "priority": "core",
+      "conflict_policy": "涉及投资金额、交易决策时，必须提示风险和独立判断。"
+    },
+    {
+      "rule_id": "KR_008_ACTIONABLE_OUTPUT",
+      "system": "general",
+      "topic": "行动方案",
+      "rule_summary": "报告最后必须给出事业、财务、家庭、健康、环境五类可执行建议。",
+      "usage_scope": "最高规格报告",
+      "priority": "core",
+      "conflict_policy": "若只输出性格描述而没有行动方案，报告质量降级。"
+    }
+  ]
+}
+

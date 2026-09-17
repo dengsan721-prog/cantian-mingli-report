@@ -142,7 +142,67 @@
         "priority": "core | auxiliary | optional",
         "conflict_policy": "string"
       }
+    },
+    "theory_sources": {
+      "description": "理论来源索引，只保存来源、主题和摘要，不保存长篇受版权保护文本。",
+      "fields": {
+        "source_id": "string, unique",
+        "tradition": "bazi | ziwei | yijing | qimen | meihua | liuyao | folk | modern_synthesis",
+        "source_type": "classic | modern_manual | practice_note | system_rule",
+        "topic": "string",
+        "summary": "string",
+        "applicable_modules": "array",
+        "limitations": "string"
+      }
+    },
+    "case_studies": {
+      "description": "案例实践库，保存已研判人员的模型标签、报告版本和验证状态。",
+      "fields": {
+        "case_id": "string, unique",
+        "person_id": "string",
+        "chart_snapshot": "object",
+        "model_tags": "array",
+        "report_ids": "array",
+        "known_life_events": "array",
+        "validation_status": "unverified | partially_verified | verified | contradicted",
+        "lessons": "array",
+        "similarity_keys": "array"
+      }
+    },
+    "correction_records": {
+      "description": "纠偏记录，用于保存生日修正、时辰修正、反馈不准、模型升级等变化。",
+      "fields": {
+        "correction_id": "string, unique",
+        "person_id": "string | null",
+        "case_id": "string | null",
+        "correction_type": "birth_date_change | birth_time_change | gender_change | event_feedback | interpretation_revision | model_rule_update",
+        "before": "object",
+        "after": "object",
+        "reason": "string",
+        "impact": "string",
+        "created_at": "string"
+      }
+    },
+    "report_quality_checks": {
+      "description": "报告出具前的质检清单，防止遗漏校时、闰月、置信度和适用边界。",
+      "fields": {
+        "check_id": "string, unique",
+        "report_id": "string | null",
+        "person_id": "string",
+        "items": {
+          "calendar_checked": "boolean",
+          "leap_month_checked": "boolean",
+          "jieqi_checked": "boolean",
+          "true_solar_time_checked": "boolean",
+          "hour_boundary_checked": "boolean",
+          "confidence_marked": "boolean",
+          "downgraded_sections_marked": "boolean",
+          "expert_questions_included": "boolean",
+          "action_plan_included": "boolean"
+        },
+        "quality_grade": "A | B | C | D",
+        "notes": "string"
+      }
     }
   }
 }
-
