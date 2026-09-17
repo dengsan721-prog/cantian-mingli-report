@@ -84,8 +84,8 @@
         "day": 5,
         "is_leap_lunar_month": null,
         "time_text": "05:25",
-        "hour_branch": "卯/寅",
-        "time_accuracy": "boundary",
+        "hour_branch": "卯",
+        "time_accuracy": "exact",
         "timezone": "Asia/Shanghai"
       },
       "birthplace": {
@@ -367,4 +367,3 @@
     }
   ]
 }
-

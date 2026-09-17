@@ -23,6 +23,10 @@ def collect(db_path: Path) -> dict[str, object]:
             "counts": rows(conn, "SELECT * FROM v_database_counts"),
             "public_person_quality": rows(conn, "SELECT * FROM v_public_person_quality"),
             "birth_fact_precision": rows(conn, "SELECT * FROM v_birth_fact_precision"),
+            "report_readiness": rows(conn, "SELECT * FROM v_report_readiness"),
+            "validation_splits": rows(conn, "SELECT * FROM v_validation_split_counts"),
+            "validation_metrics": rows(conn, "SELECT * FROM validation_metrics ORDER BY metric_type, dataset_split"),
+            "validation_protocols": rows(conn, "SELECT * FROM validation_protocols ORDER BY protocol_type, protocol_id"),
             "rule_confidence": rows(conn, "SELECT * FROM v_rule_confidence"),
             "recent_import_batches": rows(conn, "SELECT * FROM v_recent_import_batches LIMIT 5"),
         }
@@ -39,4 +43,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

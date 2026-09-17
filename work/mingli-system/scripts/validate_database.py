@@ -22,6 +22,12 @@ REQUIRED_TABLES = [
     "correction_records",
     "rule_evaluations",
     "bias_matrices",
+    "data_quality_assessments",
+    "validation_assignments",
+    "validation_metrics",
+    "validation_protocols",
+    "report_runs",
+    "report_claims",
     "import_batches",
 ]
 
@@ -31,7 +37,19 @@ JSON_COLUMNS = {
     "local_persons": ["birthplace_json", "known_chart_json"],
     "public_persons": ["external_ids_json", "aliases_json", "language_labels_json", "occupations_json", "fields_json", "countries_json", "source_ids_json"],
     "birth_facts": ["place_standard_json"],
+    "chart_snapshots": ["climate_tags_json", "ten_god_tags_json", "conflict_combination_tags_json", "details_json", "boundary_flags_json"],
     "case_studies": ["chart_snapshot_json", "model_tags_json", "report_ids_json", "known_life_events_json", "lessons_json", "similarity_keys_json"],
+    "data_quality_assessments": ["allowed_modules_json", "blocked_modules_json", "reason_codes_json"],
+    "validation_metrics": ["confidence_interval_json"],
+    "validation_protocols": ["cohort_definition_json", "target_event_types_json", "forecast_window_json", "baseline_spec_json"],
+    "report_claims": ["rule_ids_json", "evidence_ids_json"],
+}
+
+REQUIRED_COLUMNS = {
+    "birth_facts": {"calendar_model", "calendar_verification_status", "time_standard_status"},
+    "chart_snapshots": {"details_json", "boundary_flags_json", "engine_version"},
+    "public_persons": {"gender"},
+    "validation_assignments": {"era_bucket"},
 }
 
 
@@ -54,16 +72,27 @@ def validate_json_columns(conn: sqlite3.Connection) -> list[str]:
     return errors
 
 
+def validate_required_columns(conn: sqlite3.Connection) -> list[str]:
+    errors: list[str] = []
+    for table, required in REQUIRED_COLUMNS.items():
+        actual = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+        for column in sorted(required - actual):
+            errors.append(f"{table}.{column} is missing")
+    return errors
+
+
 def validate(db_path: Path) -> dict[str, object]:
     conn = sqlite3.connect(db_path)
     try:
         missing = [table for table in REQUIRED_TABLES if not table_exists(conn, table)]
         json_errors = validate_json_columns(conn) if not missing else []
+        column_errors = validate_required_columns(conn) if not missing else []
         foreign_key_errors = [list(row) for row in conn.execute("PRAGMA foreign_key_check").fetchall()]
         return {
             "database": str(db_path),
-            "ok": not missing and not json_errors and not foreign_key_errors,
+            "ok": not missing and not json_errors and not column_errors and not foreign_key_errors,
             "missing_tables": missing,
+            "column_errors": column_errors,
             "json_errors": json_errors[:50],
             "json_error_count": len(json_errors),
             "foreign_key_errors": foreign_key_errors[:50],
@@ -84,4 +113,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

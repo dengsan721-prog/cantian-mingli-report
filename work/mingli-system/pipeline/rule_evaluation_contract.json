@@ -1,9 +1,17 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "理论规则验证输入输出契约。",
   "input": {
     "rule_id": "string",
     "rule_statement": "string",
+    "protocol_id": "string",
+    "frozen_rule_version": "string",
+    "dataset_split": "train | validation | test",
+    "outcome_definition": "object",
+    "forecast_window": "object",
+    "baseline_spec": "object",
+    "primary_metric": "string",
+    "minimum_sample_size": "integer",
     "applicable_conditions": "array",
     "forbidden_conditions": "array",
     "chart_snapshot": "object",
@@ -17,13 +25,20 @@
     "recommended_rule_update": {
       "action": "keep | lower_confidence | add_condition | split_rule | retire_rule",
       "reason": "string"
-    }
+    },
+    "sample_size": "integer",
+    "observed_rate": "number | null",
+    "baseline_rate": "number | null",
+    "lift": "number | null",
+    "confidence_interval": "object",
+    "eligible_for_claim": "boolean"
   },
   "quality_notes": [
     "低精度出生资料不能验证高精度规则。",
     "没有明确年份的人生事件不能验证应期。",
+    "不得先查看测试集再修改规则、目标事件或时间窗。",
+    "必须报告基线、置信区间、样本量和多重检验归属。",
     "单个案例不能推翻规则，只能生成待复核偏差。",
     "大样本统计不能替代个体报告的现实变量分析。"
   ]
 }
-

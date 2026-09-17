@@ -21,21 +21,27 @@ def load_json(value: str | None, fallback: Any) -> Any:
         return fallback
 
 
-def confidence_from_time_accuracy(value: str | None) -> str:
-    if value == "exact":
+def confidence_from_quality(value: str | None) -> str:
+    if value == "L4":
         return "A"
-    if value in {"approximate", "boundary"}:
+    if value == "L3":
         return "B"
-    return "C"
+    if value == "L2":
+        return "C"
+    return "D"
 
 
 def local_people(conn: sqlite3.Connection) -> list[dict[str, Any]]:
     rows = conn.execute(
         """
-        SELECT name, gender, calendar_type, birth_year, birth_month, birth_day,
-               time_text, time_accuracy, birthplace_json, known_chart_json, notes
-        FROM local_persons
-        ORDER BY name
+        SELECT lp.name, lp.gender, lp.calendar_type, lp.birth_year, lp.birth_month,
+               lp.birth_day, lp.time_text, lp.time_accuracy, lp.birthplace_json,
+               lp.known_chart_json, lp.notes, dqa.quality_level,
+               dqa.max_report_level, dqa.reason_codes_json
+        FROM local_persons lp
+        LEFT JOIN data_quality_assessments dqa
+          ON dqa.subject_type = 'local_person' AND dqa.subject_id = lp.person_id
+        ORDER BY lp.name
         """
     ).fetchall()
     people = []
@@ -56,7 +62,10 @@ def local_people(conn: sqlite3.Connection) -> list[dict[str, Any]]:
                     "solarDate": chart.get("solar_date") or "待精排",
                     "bazi": chart.get("bazi_core") or "待精排",
                     "dayMaster": chart.get("day_master") or "待精排",
-                    "confidence": confidence_from_time_accuracy(row["time_accuracy"]),
+                    "confidence": confidence_from_quality(row["quality_level"]),
+                    "qualityLevel": row["quality_level"] or "L0",
+                    "maxReportLevel": row["max_report_level"] or "intake_only",
+                    "reasonCodes": load_json(row["reason_codes_json"], []),
                     "model": chart.get("model_name") or "待建立模型",
                     "notes": row["notes"] or "",
                 },

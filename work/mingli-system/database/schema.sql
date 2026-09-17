@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS public_persons (
   native_name TEXT,
   aliases_json TEXT NOT NULL DEFAULT '[]',
   language_labels_json TEXT NOT NULL DEFAULT '{}',
+  gender TEXT NOT NULL DEFAULT 'unknown',
   is_living INTEGER,
   occupations_json TEXT NOT NULL DEFAULT '[]',
   fields_json TEXT NOT NULL DEFAULT '[]',
@@ -116,8 +117,11 @@ CREATE TABLE IF NOT EXISTS birth_facts (
   date_standard TEXT,
   date_precision TEXT NOT NULL DEFAULT 'unknown',
   calendar_type TEXT NOT NULL DEFAULT 'unknown',
+  calendar_model TEXT,
+  calendar_verification_status TEXT NOT NULL DEFAULT 'unverified',
   time_text TEXT,
   time_precision TEXT NOT NULL DEFAULT 'unknown',
+  time_standard_status TEXT NOT NULL DEFAULT 'unverified',
   place_raw TEXT,
   place_standard_json TEXT NOT NULL DEFAULT '{}',
   longitude REAL,
@@ -163,6 +167,9 @@ CREATE TABLE IF NOT EXISTS chart_snapshots (
   climate_tags_json TEXT NOT NULL DEFAULT '[]',
   ten_god_tags_json TEXT NOT NULL DEFAULT '[]',
   conflict_combination_tags_json TEXT NOT NULL DEFAULT '[]',
+  details_json TEXT NOT NULL DEFAULT '{}',
+  boundary_flags_json TEXT NOT NULL DEFAULT '[]',
+  engine_version TEXT NOT NULL DEFAULT 'legacy',
   confidence TEXT NOT NULL DEFAULT 'C',
   calculation_notes TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -253,6 +260,97 @@ CREATE TABLE IF NOT EXISTS model_feedback_updates (
   FOREIGN KEY (rule_id) REFERENCES knowledge_rules(rule_id)
 );
 
+CREATE TABLE IF NOT EXISTS data_quality_assessments (
+  assessment_id TEXT PRIMARY KEY,
+  subject_type TEXT NOT NULL CHECK (subject_type IN ('local_person', 'public_person')),
+  subject_id TEXT NOT NULL,
+  birth_score INTEGER NOT NULL DEFAULT 0 CHECK (birth_score BETWEEN 0 AND 100),
+  event_score INTEGER NOT NULL DEFAULT 0 CHECK (event_score BETWEEN 0 AND 100),
+  source_score INTEGER NOT NULL DEFAULT 0 CHECK (source_score BETWEEN 0 AND 100),
+  overall_score INTEGER NOT NULL DEFAULT 0 CHECK (overall_score BETWEEN 0 AND 100),
+  quality_level TEXT NOT NULL DEFAULT 'L0',
+  max_report_level TEXT NOT NULL DEFAULT 'intake_only',
+  allowed_modules_json TEXT NOT NULL DEFAULT '[]',
+  blocked_modules_json TEXT NOT NULL DEFAULT '[]',
+  reason_codes_json TEXT NOT NULL DEFAULT '[]',
+  assessed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (subject_type, subject_id)
+);
+
+CREATE TABLE IF NOT EXISTS validation_assignments (
+  public_person_id TEXT PRIMARY KEY,
+  split_version TEXT NOT NULL,
+  dataset_split TEXT NOT NULL CHECK (dataset_split IN ('train', 'validation', 'test')),
+  era_bucket TEXT NOT NULL DEFAULT 'unknown',
+  assignment_hash TEXT NOT NULL,
+  assigned_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (public_person_id) REFERENCES public_persons(public_person_id)
+);
+
+CREATE TABLE IF NOT EXISTS validation_metrics (
+  metric_id TEXT PRIMARY KEY,
+  rule_id TEXT,
+  metric_type TEXT NOT NULL,
+  dataset_split TEXT NOT NULL,
+  sample_size INTEGER NOT NULL DEFAULT 0,
+  observed_rate REAL,
+  baseline_rate REAL,
+  lift REAL,
+  confidence_interval_json TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'not_evaluable',
+  notes TEXT,
+  calculated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (rule_id) REFERENCES knowledge_rules(rule_id)
+);
+
+CREATE TABLE IF NOT EXISTS validation_protocols (
+  protocol_id TEXT PRIMARY KEY,
+  rule_id TEXT,
+  protocol_type TEXT NOT NULL CHECK (protocol_type IN ('safety', 'outcome')),
+  hypothesis TEXT NOT NULL,
+  cohort_definition_json TEXT NOT NULL DEFAULT '{}',
+  target_event_types_json TEXT NOT NULL DEFAULT '[]',
+  forecast_window_json TEXT NOT NULL DEFAULT '{}',
+  baseline_spec_json TEXT NOT NULL DEFAULT '{}',
+  primary_metric TEXT NOT NULL,
+  minimum_sample_size INTEGER NOT NULL,
+  split_version TEXT NOT NULL,
+  frozen_rule_version TEXT NOT NULL,
+  multiple_testing_family TEXT,
+  status TEXT NOT NULL DEFAULT 'draft',
+  preregistered_at TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (rule_id) REFERENCES knowledge_rules(rule_id)
+);
+
+CREATE TABLE IF NOT EXISTS report_runs (
+  report_id TEXT PRIMARY KEY,
+  subject_type TEXT NOT NULL CHECK (subject_type IN ('local_person', 'public_person')),
+  subject_id TEXT NOT NULL,
+  chart_snapshot_id TEXT,
+  model_version TEXT NOT NULL,
+  input_hash TEXT NOT NULL,
+  max_report_level TEXT NOT NULL,
+  quality_grade TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'generated',
+  generated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (chart_snapshot_id) REFERENCES chart_snapshots(chart_snapshot_id)
+);
+
+CREATE TABLE IF NOT EXISTS report_claims (
+  claim_id TEXT PRIMARY KEY,
+  report_id TEXT NOT NULL,
+  module TEXT NOT NULL,
+  claim_summary TEXT NOT NULL,
+  rule_ids_json TEXT NOT NULL DEFAULT '[]',
+  evidence_ids_json TEXT NOT NULL DEFAULT '[]',
+  confidence TEXT NOT NULL DEFAULT 'low',
+  conclusion_type TEXT NOT NULL DEFAULT 'conditional',
+  validation_state TEXT NOT NULL DEFAULT 'unverified',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (report_id) REFERENCES report_runs(report_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_public_persons_wikidata ON public_persons(wikidata_qid);
 CREATE INDEX IF NOT EXISTS idx_public_persons_quality ON public_persons(quality_level);
 CREATE INDEX IF NOT EXISTS idx_birth_facts_subject ON birth_facts(subject_type, subject_id);
@@ -263,4 +361,10 @@ CREATE INDEX IF NOT EXISTS idx_case_studies_subject ON case_studies(subject_type
 CREATE INDEX IF NOT EXISTS idx_correction_subject ON correction_records(subject_type, subject_id);
 CREATE INDEX IF NOT EXISTS idx_rule_eval_rule ON rule_evaluations(rule_id);
 CREATE INDEX IF NOT EXISTS idx_rule_eval_person ON rule_evaluations(public_person_id);
-
+CREATE INDEX IF NOT EXISTS idx_quality_subject ON data_quality_assessments(subject_type, subject_id);
+CREATE INDEX IF NOT EXISTS idx_quality_level ON data_quality_assessments(quality_level, max_report_level);
+CREATE INDEX IF NOT EXISTS idx_validation_split ON validation_assignments(dataset_split);
+CREATE INDEX IF NOT EXISTS idx_validation_metric_rule ON validation_metrics(rule_id, dataset_split);
+CREATE INDEX IF NOT EXISTS idx_validation_protocol_rule ON validation_protocols(rule_id, status);
+CREATE INDEX IF NOT EXISTS idx_report_run_subject ON report_runs(subject_type, subject_id);
+CREATE INDEX IF NOT EXISTS idx_report_claim_report ON report_claims(report_id);

@@ -16,8 +16,12 @@
 - `scripts/import_wikipedia_year_range.py`：按出生年份范围限速扩展样本，失败记录到导入批次表。
 - `scripts/import_wikipedia_year_range_bulk.py`：并发查询出生年份、分块顺序入库，并支持断点续跑和 Wikidata 日期索引模式。
 - `scripts/audit_year_coverage.py`：审计指定年份范围的连续覆盖、缺失年份和每年记录量。
-- `scripts/calculate_chart_snapshots.py`：根据出生事实生成三柱级命盘快照。
-- `scripts/evaluate_quality_rules.py`：生成初始规则验证记录和偏差矩阵。
+- `scripts/calculate_chart_snapshots.py`：根据出生事实生成三柱或四柱命盘快照，并保存十神、藏干、五行、纳音、合冲和边界标记。
+- `scripts/build_precision_foundation.py`：生成严格资料等级、报告准入范围及固定训练/验证/测试划分。
+- `scripts/enrich_wikidata_life_events.py`：补充具有明确日期限定的公开人生事件。
+- `scripts/enrich_wikidata_birthplaces.py`：按公开出生地 QID 回填坐标和时区实体引用。
+- `scripts/evaluate_quality_rules.py`：生成安全规则检查、偏差矩阵和验证资格指标。
+- `scripts/report_gate.py`：报告生成前检查资料是否支持所请求的分析模块。
 - `scripts/rebuild_database.py`：一键重建数据库，串起初始化、导入、快照、评估和校验。
 - `scripts/db_stats.py`：输出数据库统计。
 - `scripts/validate_database.py`：校验表结构、JSON 字段和外键。
@@ -99,7 +103,32 @@
 & 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\calculate_chart_snapshots.py
 ```
 
-当前快照只生成三柱级信息。无时辰样本不会进入时柱、大运应期等精细验证。
+有可靠时刻的资料生成四柱本地钟表时快照；无时辰资料只生成三柱。真太阳时、历史时区和 1582 年前历法仍作为独立边界标记，不会被静默忽略。
+
+## 精度基础与报告闸门
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\build_precision_foundation.py
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\report_gate.py --subject-type local_person --subject-id P_DENG_XIN --module three_pillars --module precise_timing
+```
+
+闸门会给出 `allow`、`degrade` 或 `block`。L1/L2 不能请求时柱、子女晚年或精确应期；L3 只能生成暂定四柱报告；只有日期、精确时刻、地点、坐标、历史时区、历法转换均核验，且事件覆盖达标的 L4 才能进入结果规则校准。准入只证明资料够不够，不等于命理方法已经得到科学验证。
+
+## 扩充可验证事件
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\enrich_wikidata_life_events.py --batch-size 500
+```
+
+只导入 Wikidata 声明中具有明确时间限定的事件。无日期的职业、婚姻、教育或奖项关系不作为事件时点使用。
+
+公开出生地坐标回填：
+
+```powershell
+& 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\enrich_wikidata_birthplaces.py --batch-size 500
+```
+
+时区实体引用会保存在地点 JSON 中，但只有确认到 IANA 时区及出生当年的法定时制后才写入 `timezone`；不会把模糊的时区名称直接当作可计算时区。
 
 ## 巡检
 
@@ -114,7 +143,9 @@
 & 'C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' work\mingli-system\scripts\evaluate_quality_rules.py
 ```
 
-当前第一条自动验证规则是“无时辰公开样本必须降级”。它不验证命理结论本身，而是验证数据库不会把低精度样本误用于精细判断。
+当前安全检查规则是“无时辰公开样本必须降级”。它只验证系统行为，不作为预测准确率。结果验证必须使用隔离的验证集和测试集，并要求同一人物至少有 5 个事件、3 种事件类型及 3 个有日期事件。
+
+任何结果规则在运行前还必须登记验证协议：冻结规则版本、目标事件、预测时间窗、非命理基线、主指标、最小样本量和多重检验组。查看测试集后再改规则的结果只能进入新协议，不能回写成原协议命中。
 
 ## 设计边界
 

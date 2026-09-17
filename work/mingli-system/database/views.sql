@@ -12,6 +12,12 @@ UNION ALL SELECT 'case_studies', COUNT(*) FROM case_studies
 UNION ALL SELECT 'correction_records', COUNT(*) FROM correction_records
 UNION ALL SELECT 'rule_evaluations', COUNT(*) FROM rule_evaluations
 UNION ALL SELECT 'bias_matrices', COUNT(*) FROM bias_matrices
+UNION ALL SELECT 'data_quality_assessments', COUNT(*) FROM data_quality_assessments
+UNION ALL SELECT 'validation_assignments', COUNT(*) FROM validation_assignments
+UNION ALL SELECT 'validation_metrics', COUNT(*) FROM validation_metrics
+UNION ALL SELECT 'validation_protocols', COUNT(*) FROM validation_protocols
+UNION ALL SELECT 'report_runs', COUNT(*) FROM report_runs
+UNION ALL SELECT 'report_claims', COUNT(*) FROM report_claims
 UNION ALL SELECT 'import_batches', COUNT(*) FROM import_batches;
 
 DROP VIEW IF EXISTS v_public_person_quality;
@@ -56,3 +62,20 @@ SELECT
   notes
 FROM import_batches
 ORDER BY started_at DESC;
+
+DROP VIEW IF EXISTS v_report_readiness;
+CREATE VIEW v_report_readiness AS
+SELECT
+  subject_type,
+  quality_level,
+  max_report_level,
+  COUNT(*) AS subject_count,
+  ROUND(AVG(overall_score), 2) AS avg_overall_score
+FROM data_quality_assessments
+GROUP BY subject_type, quality_level, max_report_level;
+
+DROP VIEW IF EXISTS v_validation_split_counts;
+CREATE VIEW v_validation_split_counts AS
+SELECT dataset_split, era_bucket, COUNT(*) AS person_count
+FROM validation_assignments
+GROUP BY dataset_split, era_bucket;

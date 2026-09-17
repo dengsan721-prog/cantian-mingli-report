@@ -16,6 +16,16 @@ window.MINGLI_DATABASE_EXPORT = {
         "bazi": "辛丑年、丁酉月、癸亥日",
         "dayMaster": "癸水",
         "confidence": "C",
+        "qualityLevel": "L2",
+        "maxReportLevel": "three_pillar_contextual",
+        "reasonCodes": [
+          "CALENDAR_NOT_VERIFIED",
+          "COORDINATES_MISSING",
+          "FEWER_THAN_FIVE_EVENTS",
+          "FEWER_THAN_THREE_EVENT_TYPES",
+          "INSUFFICIENT_DATED_EVENTS",
+          "TIME_UNKNOWN_OR_UNRELIABLE"
+        ],
         "model": "癸水得印型、金水偏旺型、财星透月型、晚年重疏导型",
         "notes": "无时辰版；出生地为香港，时区与经度需单独记录。"
       }
@@ -34,6 +44,16 @@ window.MINGLI_DATABASE_EXPORT = {
         "bazi": "乙巳年、丁亥月、己卯日",
         "dayMaster": "己土",
         "confidence": "C",
+        "qualityLevel": "L2",
+        "maxReportLevel": "three_pillar_contextual",
+        "reasonCodes": [
+          "CALENDAR_NOT_VERIFIED",
+          "COORDINATES_MISSING",
+          "FEWER_THAN_FIVE_EVENTS",
+          "FEWER_THAN_THREE_EVENT_TYPES",
+          "INSUFFICIENT_DATED_EVENTS",
+          "TIME_UNKNOWN_OR_UNRELIABLE"
+        ],
         "model": "寒土逢水、杀印相生、巳亥冲动、责任成局型",
         "notes": "用户最新修正版本；前文旧日期农历1965年12月8日应作为历史版本，不作为当前主档。"
       }
@@ -51,7 +71,17 @@ window.MINGLI_DATABASE_EXPORT = {
         "solarDate": "1968-03-12",
         "bazi": "戊申年、乙卯月、辛巳日；北京时间为己亥时，真太阳时若接近21点可能为戌时",
         "dayMaster": "辛金",
-        "confidence": "B",
+        "confidence": "C",
+        "qualityLevel": "L2",
+        "maxReportLevel": "three_pillar_contextual",
+        "reasonCodes": [
+          "CALENDAR_NOT_VERIFIED",
+          "COORDINATES_MISSING",
+          "FEWER_THAN_FIVE_EVENTS",
+          "FEWER_THAN_THREE_EVENT_TYPES",
+          "INSUFFICIENT_DATED_EVENTS",
+          "TIME_UNKNOWN_OR_UNRELIABLE"
+        ],
         "model": "辛金逢春型、财旺身受压型、印星护身型",
         "notes": "时辰边界需细校。"
       }
@@ -70,6 +100,16 @@ window.MINGLI_DATABASE_EXPORT = {
         "bazi": "北京时间：戊戌年、丙辰月、丁卯日、癸卯时；真太阳时可能为壬寅时",
         "dayMaster": "丁火",
         "confidence": "B",
+        "qualityLevel": "L3",
+        "maxReportLevel": "four_pillar_provisional",
+        "reasonCodes": [
+          "CALENDAR_NOT_VERIFIED",
+          "COORDINATES_MISSING",
+          "FEWER_THAN_FIVE_EVENTS",
+          "FEWER_THAN_THREE_EVENT_TYPES",
+          "HISTORICAL_TIME_STANDARD_NOT_VERIFIED",
+          "INSUFFICIENT_DATED_EVENTS"
+        ],
         "model": "木火聪敏型、敏感启发型、规则引导型",
         "notes": "用户最终纠正为阳历2018-04-05。"
       }
@@ -87,7 +127,17 @@ window.MINGLI_DATABASE_EXPORT = {
         "solarDate": "1991-05-22",
         "bazi": "辛未年、癸巳月、壬辰日；子时需早子夜子和真太阳时校验",
         "dayMaster": "壬水",
-        "confidence": "B",
+        "confidence": "C",
+        "qualityLevel": "L2",
+        "maxReportLevel": "three_pillar_contextual",
+        "reasonCodes": [
+          "CALENDAR_NOT_VERIFIED",
+          "COORDINATES_MISSING",
+          "FEWER_THAN_FIVE_EVENTS",
+          "FEWER_THAN_THREE_EVENT_TYPES",
+          "INSUFFICIENT_DATED_EVENTS",
+          "TIME_UNKNOWN_OR_UNRELIABLE"
+        ],
         "model": "壬水受火型、财旺压身型、流动成事型",
         "notes": "子时边界需细校。"
       }
@@ -105,7 +155,17 @@ window.MINGLI_DATABASE_EXPORT = {
         "solarDate": "1962-10-12",
         "bazi": "壬寅年、庚戌月、癸未日；北京时间早9点为丁巳时，真太阳时可能仍在辰时尾段",
         "dayMaster": "癸水",
-        "confidence": "B",
+        "confidence": "C",
+        "qualityLevel": "L2",
+        "maxReportLevel": "three_pillar_contextual",
+        "reasonCodes": [
+          "CALENDAR_NOT_VERIFIED",
+          "COORDINATES_MISSING",
+          "FEWER_THAN_FIVE_EVENTS",
+          "FEWER_THAN_THREE_EVENT_TYPES",
+          "INSUFFICIENT_DATED_EVENTS",
+          "TIME_UNKNOWN_OR_UNRELIABLE"
+        ],
         "model": "癸水承压、官印相生、财官并临、晚年再起型",
         "notes": "早上9点处于辰巳边界，需要校时。"
       }
@@ -124,6 +184,17 @@ window.MINGLI_DATABASE_EXPORT = {
         "bazi": "己巳年、戊辰月、丙申日、己亥时",
         "dayMaster": "丙火",
         "confidence": "B",
+        "qualityLevel": "L3",
+        "maxReportLevel": "four_pillar_provisional",
+        "reasonCodes": [
+          "CALENDAR_NOT_VERIFIED",
+          "COORDINATES_MISSING",
+          "FEWER_THAN_FIVE_EVENTS",
+          "FEWER_THAN_THREE_EVENT_TYPES",
+          "HISTORICAL_TIME_STANDARD_NOT_VERIFIED",
+          "INSUFFICIENT_DATED_EVENTS",
+          "TIME_APPROXIMATE"
+        ],
         "model": "输出经营型、外部成事型、中年立局型",
         "notes": "农历按非闰月处理；出生地需真太阳时校验。"
       }
@@ -142,6 +213,16 @@ window.MINGLI_DATABASE_EXPORT = {
         "bazi": "癸卯年、壬戌月、丁未日",
         "dayMaster": "丁火",
         "confidence": "C",
+        "qualityLevel": "L2",
+        "maxReportLevel": "three_pillar_contextual",
+        "reasonCodes": [
+          "CALENDAR_NOT_VERIFIED",
+          "COORDINATES_MISSING",
+          "FEWER_THAN_FIVE_EVENTS",
+          "FEWER_THAN_THREE_EVENT_TYPES",
+          "INSUFFICIENT_DATED_EVENTS",
+          "TIME_UNKNOWN_OR_UNRELIABLE"
+        ],
         "model": "丁火承压型、官杀透出型、内韧积累型",
         "notes": "无时辰版。"
       }
@@ -160,6 +241,16 @@ window.MINGLI_DATABASE_EXPORT = {
         "bazi": "戊辰年、癸亥月、戊子日",
         "dayMaster": "戊土",
         "confidence": "C",
+        "qualityLevel": "L2",
+        "maxReportLevel": "three_pillar_contextual",
+        "reasonCodes": [
+          "CALENDAR_NOT_VERIFIED",
+          "COORDINATES_MISSING",
+          "FEWER_THAN_FIVE_EVENTS",
+          "FEWER_THAN_THREE_EVENT_TYPES",
+          "INSUFFICIENT_DATED_EVENTS",
+          "TIME_UNKNOWN_OR_UNRELIABLE"
+        ],
         "model": "财重现实型、内压承载型、家庭稳定型",
         "notes": "无时辰版。"
       }
@@ -174,25 +265,31 @@ window.MINGLI_DATABASE_EXPORT = {
       "public_persons": 25264,
       "birth_facts": 25273,
       "chart_snapshots": 18094,
-      "life_events_public": 21431,
+      "life_events_public": 36187,
       "case_studies": 3,
       "correction_records": 2,
       "rule_evaluations": 18085,
       "bias_matrices": 1,
-      "import_batches": 1075
+      "data_quality_assessments": 25273,
+      "validation_assignments": 25264,
+      "validation_metrics": 6,
+      "validation_protocols": 2,
+      "report_runs": 0,
+      "report_claims": 0,
+      "import_batches": 1128
     },
     "publicPersonQuality": [
       {
         "quality_level": "L0",
-        "person_count": 171
+        "person_count": 7179
       },
       {
         "quality_level": "L1",
-        "person_count": 11085
+        "person_count": 6748
       },
       {
         "quality_level": "L2",
-        "person_count": 14008
+        "person_count": 11337
       }
     ],
     "birthFactPrecision": [
@@ -206,7 +303,13 @@ window.MINGLI_DATABASE_EXPORT = {
         "subject_type": "local_person",
         "date_precision": "day",
         "time_precision": "boundary",
-        "fact_count": 4
+        "fact_count": 3
+      },
+      {
+        "subject_type": "local_person",
+        "date_precision": "day",
+        "time_precision": "exact",
+        "fact_count": 1
       },
       {
         "subject_type": "local_person",

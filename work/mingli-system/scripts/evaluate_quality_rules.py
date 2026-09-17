@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,16 @@ DEFAULT_DB = ROOT / "data" / "mingli_validation.db"
 
 def dump(value: Any) -> str:
     return json.dumps(value if value is not None else [], ensure_ascii=False)
+
+
+def wilson_interval(successes: int, total: int, z: float = 1.959964) -> dict[str, float]:
+    if total <= 0:
+        return {}
+    proportion = successes / total
+    denominator = 1 + z * z / total
+    centre = (proportion + z * z / (2 * total)) / denominator
+    margin = z * math.sqrt((proportion * (1 - proportion) + z * z / (4 * total)) / total) / denominator
+    return {"level": 0.95, "low": round(max(0, centre - margin), 6), "high": round(min(1, centre + margin), 6)}
 
 
 def evaluate_no_hour_rule(conn: sqlite3.Connection) -> int:
@@ -121,16 +132,105 @@ def rebuild_bias_matrices(conn: sqlite3.Connection) -> int:
     return count
 
 
+def rebuild_validation_metrics(conn: sqlite3.Connection) -> int:
+    conn.execute("DELETE FROM validation_metrics WHERE metric_id LIKE 'METRIC_SAFETY_%' OR metric_id LIKE 'METRIC_OUTCOME_%'")
+    count = 0
+    for split in ("train", "validation", "test"):
+        sample_size, hits = conn.execute(
+            """
+            SELECT COUNT(*), SUM(CASE WHEN re.match_level = 'hit' THEN 1 ELSE 0 END)
+            FROM rule_evaluations re
+            JOIN validation_assignments va ON va.public_person_id = re.public_person_id
+            WHERE re.rule_id = 'KR_002_NO_HOUR_NO_FULL_DETAIL'
+              AND va.dataset_split = ?
+            """,
+            (split,),
+        ).fetchone()
+        observed_rate = (hits or 0) / sample_size if sample_size else None
+        conn.execute(
+            """
+            INSERT INTO validation_metrics (
+              metric_id, rule_id, metric_type, dataset_split, sample_size,
+              observed_rate, baseline_rate, lift, confidence_interval_json,
+              status, notes, calculated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """,
+            (
+                f"METRIC_SAFETY_NO_HOUR_{split.upper()}",
+                "KR_002_NO_HOUR_NO_FULL_DETAIL",
+                "policy_compliance",
+                split,
+                sample_size,
+                observed_rate,
+                None,
+                None,
+                dump(wilson_interval(hits or 0, sample_size)),
+                "safety_check_only",
+                "Measures whether the pipeline downgraded missing-hour records. It is not an outcome prediction metric.",
+            ),
+        )
+        count += 1
+
+        total_people, eligible_people = conn.execute(
+            """
+            SELECT
+              COUNT(*),
+              SUM(CASE WHEN event_count >= 5 AND event_types >= 3 AND dated_events >= 3 THEN 1 ELSE 0 END)
+            FROM (
+              SELECT
+                va.public_person_id,
+                COUNT(DISTINCT CASE WHEN le.allowed_for_modeling = 1 THEN le.event_id END) AS event_count,
+                COUNT(DISTINCT CASE WHEN le.allowed_for_modeling = 1 THEN le.event_type END) AS event_types,
+                COUNT(DISTINCT CASE WHEN le.allowed_for_modeling = 1 AND le.event_precision != 'unknown' THEN le.event_id END) AS dated_events
+              FROM validation_assignments va
+              LEFT JOIN life_events_public le ON le.public_person_id = va.public_person_id
+              WHERE va.dataset_split = ?
+              GROUP BY va.public_person_id
+            )
+            """,
+            (split,),
+        ).fetchone()
+        coverage_rate = (eligible_people or 0) / total_people if total_people else 0
+        status = "eligible" if (eligible_people or 0) >= 500 else "insufficient_data"
+        conn.execute(
+            """
+            INSERT INTO validation_metrics (
+              metric_id, rule_id, metric_type, dataset_split, sample_size,
+              observed_rate, baseline_rate, lift, confidence_interval_json,
+              status, notes, calculated_at
+            ) VALUES (?, NULL, ?, ?, ?, ?, NULL, NULL, ?, ?, ?, CURRENT_TIMESTAMP)
+            """,
+            (
+                f"METRIC_OUTCOME_COVERAGE_{split.upper()}",
+                "outcome_validation_eligibility",
+                split,
+                total_people,
+                coverage_rate,
+                dump({
+                    **wilson_interval(eligible_people or 0, total_people),
+                    "eligible_people": eligible_people or 0,
+                    "minimum_required": 500,
+                }),
+                status,
+                "Requires at least five events, three event types, and three dated events per person before outcome-rule validation.",
+            ),
+        )
+        count += 1
+    return count
+
+
 def run(db_path: Path) -> dict[str, Any]:
     conn = sqlite3.connect(db_path)
     try:
         eval_count = evaluate_no_hour_rule(conn)
         matrix_count = rebuild_bias_matrices(conn)
+        metric_count = rebuild_validation_metrics(conn)
         conn.commit()
         return {
             "db": str(db_path),
             "rule_evaluations_upserted": eval_count,
             "bias_matrices_upserted": matrix_count,
+            "validation_metrics_upserted": metric_count,
         }
     finally:
         conn.close()
@@ -145,4 +245,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
