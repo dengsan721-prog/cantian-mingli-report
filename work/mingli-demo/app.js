@@ -1011,7 +1011,7 @@ function renderReport(record) {
 
     const coverageBlock = node("section", "model-evidence");
     coverageBlock.append(node("h4", "", "数据覆盖与边界"));
-    coverageBlock.append(node("p", "", `出生资料覆盖 ${birthRange}，约 ${Number(coverage.birthSpanYears || 0).toLocaleString("zh-CN")} 年；事件记录覆盖 ${coverage.eventStartYear || "待补"}—${coverage.eventEndYear || "待补"} 年，共 ${coverage.eventTypeCount || 0} 类。当前仅 ${Number(coverage.timedBirthRecords || 0).toLocaleString("zh-CN")} 条公开资料带出生时刻，因此无时辰样本不会被用于证明精确时柱。`));
+    coverageBlock.append(node("p", "", `出生资料覆盖 ${birthRange}，约 ${Number(coverage.birthSpanYears || 0).toLocaleString("zh-CN")} 年；事件记录覆盖 ${coverage.eventStartYear || "待补"}—${coverage.eventEndYear || "待补"} 年，共 ${coverage.eventTypeCount || 0} 类。`));
     const coverageMeta = node("div", "model-meta-row");
     coverageMeta.append(
       node("span", "", `${Number(validation.calibrationEvents || 0).toLocaleString("zh-CN")} 条校时事件`),
