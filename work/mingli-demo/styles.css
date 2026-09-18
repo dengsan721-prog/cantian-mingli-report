@@ -98,58 +98,73 @@ a:focus-visible {
   flex-direction: column;
   width: var(--sidebar-width);
   height: 100vh;
-  padding: 24px 16px 18px;
-  border-right: 1px solid #ddd5c4;
-  background-color: #f7f5ee;
+  padding: 0 16px 18px;
+  border-right: 1px solid rgba(170, 137, 70, 0.36);
+  background-color: #f8f6ee;
   background-image: url("./assets/celestial-page-pattern.png");
-  background-position: 57% top;
-  background-size: auto 900px;
+  background-position: 56% 86px;
+  background-size: auto 760px;
   background-repeat: repeat-y;
-  background-blend-mode: soft-light;
+  background-blend-mode: multiply;
+  box-shadow: 12px 0 42px rgba(36, 77, 68, 0.07);
+  overflow: hidden;
   z-index: 20;
 }
 
 .brand-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 11px;
-  min-height: 44px;
-  padding: 0 5px;
+  min-height: 94px;
+  margin: 0 -16px;
+  padding: 20px 16px;
+  border-bottom: 1px solid rgba(174, 138, 65, 0.46);
+  background-color: rgba(250, 248, 239, 0.78);
+  background-image: url("./assets/gallery/celestial-palace-01.png");
+  background-position: center 45%;
+  background-size: cover;
+  background-blend-mode: screen;
+  isolation: isolate;
+}
+
+.brand-row::after {
+  position: absolute;
+  right: 16px;
+  bottom: -1px;
+  left: 16px;
+  height: 2px;
+  background: #af8437;
+  content: "";
+  opacity: 0.72;
+  z-index: -1;
 }
 
 .brand-mark {
   display: grid;
-  flex: 0 0 38px;
-  width: 38px;
-  height: 38px;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
   place-items: center;
   border-radius: 8px;
   border: 1px solid rgba(180, 148, 74, 0.72);
   color: #fffdf6;
   background: #24584f;
-  box-shadow: 0 5px 16px rgba(36, 88, 79, 0.16);
+  box-shadow: 0 7px 20px rgba(36, 88, 79, 0.24), 0 0 0 3px rgba(255, 253, 246, 0.52);
   font-family: "Kaiti SC", "STKaiti", serif;
   font-size: 22px;
   line-height: 1;
 }
 
-.brand-row strong,
-.brand-row span {
-  display: block;
-}
-
 .brand-row strong {
+  display: block;
+  min-width: 0;
   color: #203d37;
   font-family: var(--report-display);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.25;
-}
-
-.brand-row span {
-  margin-top: 2px;
-  color: #73756e;
-  font-size: 12px;
+  white-space: nowrap;
 }
 
 .new-report-button {
@@ -158,13 +173,13 @@ a:focus-visible {
   justify-content: center;
   gap: 7px;
   width: 100%;
-  min-height: 42px;
-  margin: 26px 0 24px;
-  border: 0;
+  min-height: 44px;
+  margin: 18px 0 22px;
+  border: 1px solid rgba(185, 149, 77, 0.5);
   border-radius: var(--radius);
   color: #fff;
   background: #286a5d;
-  box-shadow: 0 7px 18px rgba(40, 106, 93, 0.16);
+  box-shadow: 0 8px 22px rgba(40, 106, 93, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
   font-weight: 600;
   cursor: pointer;
 }
@@ -192,13 +207,14 @@ a:focus-visible {
 
 .history-heading h2 {
   margin: 0;
-  font-size: 12px;
+  color: #6e5d35;
+  font-size: 11px;
   font-weight: 650;
   text-transform: uppercase;
 }
 
 .history-heading span {
-  color: var(--faint);
+  color: #8c7e5e;
   font-size: 12px;
 }
 
@@ -222,10 +238,11 @@ a:focus-visible {
   width: 100%;
   height: 36px;
   padding: 0 10px 0 32px;
-  border: 1px solid rgba(172, 147, 91, 0.22);
+  border: 1px solid rgba(172, 147, 91, 0.34);
   border-radius: 7px;
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.68);
+  background: rgba(255, 255, 251, 0.82);
+  box-shadow: 0 4px 14px rgba(70, 71, 56, 0.05);
   font-size: 13px;
 }
 
@@ -235,6 +252,9 @@ a:focus-visible {
 }
 
 .history-list {
+  display: grid;
+  align-content: start;
+  gap: 5px;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -244,23 +264,29 @@ a:focus-visible {
 .history-item {
   width: 100%;
   min-height: 67px;
-  margin: 2px 0;
+  margin: 0;
   padding: 10px;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 7px;
   text-align: left;
-  background: transparent;
+  background: rgba(255, 255, 252, 0.46);
   cursor: pointer;
 }
 
 .history-item:hover {
-  background: rgba(232, 226, 211, 0.76);
+  border-color: rgba(176, 143, 76, 0.24);
+  background: rgba(247, 242, 228, 0.88);
 }
 
 .history-item.active {
   color: #fff;
-  background: #2c6258;
-  box-shadow: 0 7px 18px rgba(44, 98, 88, 0.14);
+  border-color: rgba(185, 149, 77, 0.58);
+  background-color: #2c6258;
+  background-image: url("./assets/celestial-page-pattern.png");
+  background-position: center 55%;
+  background-size: 520px auto;
+  background-blend-mode: soft-light;
+  box-shadow: 0 9px 22px rgba(44, 98, 88, 0.2);
 }
 
 .history-item-head,
@@ -303,7 +329,7 @@ a:focus-visible {
   align-items: center;
   gap: 7px;
   margin: 14px 4px 0;
-  color: var(--faint);
+  color: #7f7b6f;
   font-size: 11px;
 }
 
