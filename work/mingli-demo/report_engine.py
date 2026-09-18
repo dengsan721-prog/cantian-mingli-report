@@ -12,6 +12,8 @@ from typing import Any
 
 from lunar_python import Lunar, LunarYear, Solar
 
+from narrative_engine import build_personalized_narrative
+
 
 ROOT = Path(__file__).resolve().parent
 SYSTEM_ROOT = ROOT.parent / "mingli-system"
@@ -60,7 +62,7 @@ EVENT_TEN_GOD_HINTS = {
     "其他": (),
 }
 
-MODEL_VERSION = "mingli-report-v2"
+MODEL_VERSION = "mingli-report-v3"
 
 PLACE_PRESETS = (
     {
@@ -895,7 +897,7 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
         theme_signals.append("表达、技术输出与自我实现")
     if any("比" in item or "劫" in item for item in ten_gods):
         theme_signals.append("自主性、同辈关系与竞争意识")
-    theme_text = "、".join(theme_signals) or "责任、选择与自我实现"
+    theme_text = "；".join(theme_signals) or "责任、选择与自我实现"
     climate_text = "、".join(chart["climate_tags"]) or "节气交界待复核"
     event_samples = "、".join(
         f"{event['date']} 年附近的{event['type']}事件" for event in data["events"][:3]
@@ -1101,6 +1103,26 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
         },
     ]
 
+    narrative = build_personalized_narrative(
+        data=data,
+        chart=chart,
+        elements=elements,
+        strongest=strongest,
+        weakest=weakest,
+        profile=profile,
+        dominant_profile=dominant_profile,
+        ten_gods=ten_gods,
+        relation_text=relation_text,
+        theme_text=theme_text,
+        climate_text=climate_text,
+        event_context=event_context,
+        luck_cycle_context=luck_cycle_context,
+        quality=quality,
+        hour_boundary=hour_boundary,
+        pillars=pillars,
+    )
+    sections = narrative["sections"]
+
     technical_cues = {
         "portrait": f"四柱为{'、'.join(pillars)}；日主{chart['day_master']}，月令{chart['month_command']}，季节标记为{climate_text}。",
         "structure": f"表层五行以{strongest}较显、{weakest}相对较少；十神可见{'、'.join(ten_gods) if ten_gods else '三柱基础信息'}。",
@@ -1139,7 +1161,7 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
     }
     for section in sections:
         section["technical"] = technical_cues[section["id"]]
-        section["insight"] = deep_insights[section["id"]]
+        section.setdefault("insight", deep_insights[section["id"]])
         section_evidence = list(evidence_map[section["id"]])
         if data["timePrecision"] != "unknown" and "KR_002_NO_HOUR_NO_FULL_DETAIL" in section_evidence:
             section_evidence.remove("KR_002_NO_HOUR_NO_FULL_DETAIL")
@@ -1159,8 +1181,8 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
     ]
     highlights = [
         {"label": "命盘主调", "value": f"{chart['day_master']}日主，{strongest}的力量较显"},
-        {"label": "成事方式", "value": profile["strength"]},
-        {"label": "关系课题", "value": "先让感受被听见，再一起解决问题"},
+        {"label": "成事方式", "value": narrative["axes"][1]["value"] + " · " + profile["strength"]},
+        {"label": "动力来源", "value": narrative["axes"][2]["value"] + " · " + narrative["lifeStage"]["name"]},
         {"label": "当前提醒", "value": profile["prompt"]},
     ]
     return {
@@ -1181,6 +1203,11 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
             "highlights": highlights,
             "claims": claims,
             "luckCycles": luck_cycles,
+            "narrativeProfile": {
+                "seedVersion": narrative["seedVersion"],
+                "lifeStage": narrative["lifeStage"],
+                "axes": narrative["axes"],
+            },
             "sections": sections,
             "foundation": {
                 "modelName": "多源命理结构研判模型",

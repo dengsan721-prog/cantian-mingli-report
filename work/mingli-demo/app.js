@@ -794,6 +794,29 @@ function appendReadingModes(container) {
   container.append(modes);
 }
 
+function appendPersonalityAxes(container, profile) {
+  if (!profile?.axes?.length) return;
+  const panel = node("section", "personality-axes");
+  const heading = node("div", "personality-axes-heading");
+  heading.append(
+    node("span", "", "四维性格侧写"),
+    node("small", "", `${profile.lifeStage?.name || "人生阶段"} · 从偏好看见行为路径`)
+  );
+  panel.append(heading);
+  const grid = node("div", "personality-axes-grid");
+  profile.axes.forEach((axis, index) => {
+    const item = node("article", `personality-axis tone-${index + 1}`);
+    item.append(
+      node("span", "", axis.name),
+      node("strong", "", axis.value),
+      node("p", "", axis.description)
+    );
+    grid.append(item);
+  });
+  panel.append(grid);
+  container.append(panel);
+}
+
 function appendClaims(container, claims) {
   if (!claims?.length) return;
   const panel = node("section", "report-claims");
@@ -938,6 +961,7 @@ function renderReport(record) {
     content.append(highlights);
   }
 
+  appendPersonalityAxes(content, record.report.narrativeProfile);
   appendClaims(content, record.report.claims);
   appendLuckCycles(content, record.report.luckCycles || record.chart.luckCycles);
   appendTechnicalSnapshot(content, record);

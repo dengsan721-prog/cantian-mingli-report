@@ -3,6 +3,8 @@ from __future__ import annotations
 import sys
 import tempfile
 import unittest
+from difflib import SequenceMatcher
+from itertools import combinations
 from pathlib import Path
 
 
@@ -11,6 +13,7 @@ if str(DEMO_ROOT) not in sys.path:
     sys.path.insert(0, str(DEMO_ROOT))
 
 from report_engine import generate_report, lunar_year_options, resolve_birthplace  # noqa: E402
+from narrative_engine import narrative_similarity, narrative_text  # noqa: E402
 from server import delete_report, get_report, list_reports, save_report  # noqa: E402
 
 
@@ -151,6 +154,30 @@ class ReportEngineTests(unittest.TestCase):
             self.assertEqual(loaded["input"]["name"], "邓易安")
             self.assertTrue(delete_report(db_path, saved["recordId"]))
             self.assertEqual(list_reports(db_path), [])
+
+    def test_cross_person_narratives_stay_below_thirty_percent_similarity(self) -> None:
+        fixtures = [
+            {"name": "甲", "gender": "male", "year": 1989, "month": 4, "day": 6, "timeText": "22:00", "birthplace": "西安"},
+            {"name": "乙", "gender": "male", "year": 1991, "month": 5, "day": 22, "timeText": "00:30", "birthplace": "商洛"},
+            {"name": "丙", "gender": "male", "year": 2018, "month": 4, "day": 5, "timeText": "05:25", "birthplace": "西安"},
+            {"name": "丁", "gender": "female", "year": 1988, "month": 11, "day": 29, "timeText": "12:00", "birthplace": "宝鸡"},
+            {"name": "戊", "gender": "female", "year": 1965, "month": 12, "day": 8, "timeText": "unknown", "birthplace": "宝鸡"},
+            {"name": "己", "gender": "male", "year": 1961, "month": 9, "day": 27, "timeText": "unknown", "birthplace": "香港"},
+        ]
+        reports = []
+        for fixture in fixtures:
+            payload = exact_payload()
+            payload.update(fixture)
+            reports.append(generate_report(payload)["report"])
+
+        for (left_index, left), (right_index, right) in combinations(enumerate(reports), 2):
+            pair = f"fixture {left_index + 1} / fixture {right_index + 1}"
+            self.assertLess(narrative_similarity(left, right, width=7), 0.30, pair)
+            self.assertLess(
+                SequenceMatcher(None, narrative_text(left), narrative_text(right), autojunk=False).ratio(),
+                0.30,
+                pair,
+            )
 
 
 if __name__ == "__main__":
