@@ -277,6 +277,7 @@ function showForm({ keepValues = false } = {}) {
   $("#pageEyebrow").textContent = "参天·东方智慧命理研判";
   $("#pageTitle").textContent = "建立命盘，信息越准，研判越稳";
   stageHeader.classList.add("form-mode");
+  stageHeader.classList.remove("report-mode");
   renderHistory();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -402,6 +403,7 @@ function renderReport(record) {
   reportView.hidden = false;
   reportActions.hidden = false;
   stageHeader.classList.remove("form-mode");
+  stageHeader.classList.add("report-mode");
   $("#pageEyebrow").textContent = "命理综合研判";
   $("#pageTitle").textContent = record.report.title;
   const imageSeed = record.recordId || `${record.input.name}:${record.input.solarDate}:${record.report.generatedAt}`;

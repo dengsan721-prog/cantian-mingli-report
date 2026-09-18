@@ -8,18 +8,20 @@
   --faint: #8e8e93;
   --line: #d2d2d7;
   --line-soft: #e5e5ea;
-  --blue: #0071e3;
-  --blue-hover: #0077ed;
-  --blue-soft: #edf5ff;
+  --blue: #66527d;
+  --blue-hover: #564568;
+  --blue-soft: #f3eef7;
   --red: #c9342f;
   --red-soft: #fff1f0;
   --gold: #9a6b13;
   --gold-soft: #fff8e8;
   --green: #227746;
   --green-soft: #eef8f1;
-  --jade: #286a5d;
-  --jade-deep: #1f5148;
-  --jade-soft: #edf5f1;
+  --jade: #66527d;
+  --jade-deep: #51415f;
+  --jade-soft: #f4eef6;
+  --divine: #66527d;
+  --divine-deep: #51415f;
   --ritual-gold: #a77a2c;
   --ritual-line: #ddcfad;
   --radius: 8px;
@@ -149,8 +151,12 @@ a:focus-visible {
   border-radius: 8px;
   border: 1px solid rgba(180, 148, 74, 0.72);
   color: #fffdf6;
-  background: #24584f;
-  box-shadow: 0 7px 20px rgba(36, 88, 79, 0.24), 0 0 0 3px rgba(255, 253, 246, 0.52);
+  background-color: var(--divine);
+  background-image: url("./assets/gallery/star-chart-01.png");
+  background-position: center;
+  background-size: 180px auto;
+  background-blend-mode: soft-light;
+  box-shadow: 0 7px 20px rgba(74, 58, 91, 0.26), 0 0 0 3px rgba(255, 253, 246, 0.52);
   font-family: "Kaiti SC", "STKaiti", serif;
   font-size: 22px;
   line-height: 1;
@@ -178,14 +184,18 @@ a:focus-visible {
   border: 1px solid rgba(185, 149, 77, 0.5);
   border-radius: var(--radius);
   color: #fff;
-  background: #286a5d;
-  box-shadow: 0 8px 22px rgba(40, 106, 93, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  background-color: var(--divine);
+  background-image: url("./assets/gallery/star-chart-01.png");
+  background-position: center 46%;
+  background-size: 520px auto;
+  background-blend-mode: soft-light;
+  box-shadow: 0 8px 22px rgba(74, 58, 91, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
   font-weight: 600;
   cursor: pointer;
 }
 
 .new-report-button:hover {
-  background: #21584e;
+  background-color: var(--divine-deep);
 }
 
 .primary-button:hover {
@@ -281,12 +291,12 @@ a:focus-visible {
 .history-item.active {
   color: #fff;
   border-color: rgba(185, 149, 77, 0.58);
-  background-color: #2c6258;
-  background-image: url("./assets/celestial-page-pattern.png");
+  background-color: var(--divine);
+  background-image: url("./assets/gallery/star-chart-01.png");
   background-position: center 55%;
   background-size: 520px auto;
   background-blend-mode: soft-light;
-  box-shadow: 0 9px 22px rgba(44, 98, 88, 0.2);
+  box-shadow: 0 9px 22px rgba(74, 58, 91, 0.22);
 }
 
 .history-item-head,
@@ -390,13 +400,54 @@ a:focus-visible {
 }
 
 .stage-header.form-mode .eyebrow {
-  color: #8a6b31;
+  margin: 0;
+  color: #43374f;
+  font-family: var(--report-display);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .stage-header.form-mode h1 {
-  color: #1d4039;
+  margin-top: 4px;
+  color: #806b42;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.stage-header.report-mode {
+  min-height: 92px;
+  border-bottom-color: rgba(173, 136, 61, 0.46);
+  background-color: rgba(248, 248, 242, 0.88);
+  background-image: url("./assets/gallery/celestial-palace-02.png");
+  background-position: center 48%;
+  background-size: cover;
+  background-blend-mode: screen;
+  box-shadow: 0 8px 30px rgba(39, 82, 72, 0.08);
+}
+
+.stage-header.report-mode::after {
+  position: absolute;
+  right: clamp(24px, 5vw, 72px);
+  bottom: 0;
+  left: clamp(24px, 5vw, 72px);
+  height: 2px;
+  background: #a77a2c;
+  content: "";
+  opacity: 0.68;
+}
+
+.stage-header.report-mode .eyebrow {
+  display: none;
+}
+
+.stage-header.report-mode h1 {
+  color: #40334c;
   font-family: var(--report-display);
+  font-size: 25px;
   font-weight: 700;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.82);
 }
 
 .header-actions {
@@ -544,7 +595,7 @@ a:focus-visible {
 .section-heading h2 {
   margin: 0;
   font-size: 18px;
-  color: #23443d;
+  color: #44384f;
   font-family: var(--report-display);
   font-weight: 700;
   line-height: 1.3;
@@ -696,7 +747,7 @@ a:focus-visible {
 }
 
 .segmented-control input:checked + span {
-  color: #17483f;
+  color: #4b3c59;
   background: #fffef9;
   box-shadow: 0 1px 4px rgba(34, 76, 67, 0.14), 0 -2px 0 rgba(167, 122, 44, 0.46) inset;
 }
@@ -800,7 +851,7 @@ a:focus-visible {
 .time-mode-control input:checked + span {
   color: #fff;
   background: var(--jade);
-  box-shadow: 0 4px 12px rgba(40, 106, 93, 0.2);
+  box-shadow: 0 4px 12px rgba(74, 58, 91, 0.22);
 }
 
 .time-mode-control input:focus-visible + span {
@@ -1017,7 +1068,7 @@ a:focus-visible {
 }
 
 .event-summary-copy strong {
-  color: #23443d;
+  color: #44384f;
   font-family: var(--report-display);
   font-size: 17px;
   font-weight: 650;
@@ -1147,12 +1198,16 @@ a:focus-visible {
 }
 
 .form-view .primary-button {
-  background: var(--jade);
-  box-shadow: 0 8px 22px rgba(40, 106, 93, 0.2), 0 0 0 1px rgba(167, 122, 44, 0.28) inset;
+  background-color: var(--divine);
+  background-image: url("./assets/gallery/star-chart-01.png");
+  background-position: center 52%;
+  background-size: 620px auto;
+  background-blend-mode: soft-light;
+  box-shadow: 0 8px 22px rgba(74, 58, 91, 0.24), 0 0 0 1px rgba(167, 122, 44, 0.34) inset;
 }
 
 .form-view .primary-button:hover {
-  background: var(--jade-deep);
+  background-color: var(--divine-deep);
 }
 
 .submit-bar strong,
@@ -1317,39 +1372,80 @@ a:focus-visible {
 }
 
 .report-highlights {
-  margin-bottom: 28px;
+  position: relative;
+  margin-bottom: 32px;
+  padding: 20px;
+  border-top: 2px solid rgba(167, 122, 44, 0.76);
+  border-bottom: 1px solid rgba(167, 122, 44, 0.3);
+  background: rgba(250, 250, 245, 0.8);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.report-highlights::before {
+  position: absolute;
+  inset: 0;
+  background: url("./assets/gallery/star-chart-01.png") center 46% / cover no-repeat;
+  content: "";
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .highlights-heading {
   display: flex;
-  align-items: baseline;
-  gap: 9px;
-  margin-bottom: 10px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .highlights-heading span {
-  font-size: 14px;
+  color: #4a3b58;
+  font-family: var(--report-display);
+  font-size: 18px;
   font-weight: 700;
 }
 
 .highlights-heading small {
-  color: var(--muted);
+  color: #7c6b45;
   font-size: 11px;
 }
 
+.highlights-heading::after {
+  flex: 1;
+  height: 1px;
+  background: rgba(167, 122, 44, 0.34);
+  content: "";
+}
+
 .highlights-grid {
+  counter-reset: highlight;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px;
+  gap: 0;
+  border-top: 1px solid rgba(84, 112, 102, 0.2);
+  border-left: 1px solid rgba(84, 112, 102, 0.2);
 }
 
 .highlight-item {
-  min-height: 88px;
-  padding: 13px 15px;
-  border: 1px solid var(--line-soft);
-  border-top-width: 3px;
-  border-radius: 7px;
-  background: #fff;
+  position: relative;
+  min-height: 94px;
+  padding: 16px 52px 16px 16px;
+  border-right: 1px solid rgba(84, 112, 102, 0.2);
+  border-bottom: 1px solid rgba(84, 112, 102, 0.2);
+  background: rgba(255, 255, 252, 0.7);
+  counter-increment: highlight;
+}
+
+.highlight-item::after {
+  position: absolute;
+  top: 12px;
+  right: 15px;
+  color: rgba(167, 122, 44, 0.22);
+  content: "0" counter(highlight);
+  font-family: var(--report-display);
+  font-size: 24px;
+  font-weight: 700;
 }
 
 .highlight-item span,
@@ -1359,33 +1455,17 @@ a:focus-visible {
 
 .highlight-item span {
   margin-bottom: 7px;
-  color: var(--muted);
+  color: #6c775f;
   font-size: 10px;
   font-weight: 650;
 }
 
 .highlight-item strong {
-  color: #2c2c2e;
+  color: #3f3449;
   font-family: var(--report-display);
   font-size: 14px;
   font-weight: 700;
   line-height: 1.55;
-}
-
-.highlight-item.tone-1 {
-  border-top-color: #3d6f9e;
-}
-
-.highlight-item.tone-2 {
-  border-top-color: #9a6b13;
-}
-
-.highlight-item.tone-3 {
-  border-top-color: #8c4a48;
-}
-
-.highlight-item.tone-4 {
-  border-top-color: #397052;
 }
 
 .foundation-panel {
@@ -1972,7 +2052,21 @@ a:focus-visible {
 
   .stage-header.form-mode h1 {
     max-width: calc(100vw - 82px);
+    font-size: 10px;
+  }
+
+  .stage-header.form-mode .eyebrow {
+    max-width: calc(100vw - 82px);
     font-size: 16px;
+  }
+
+  .stage-header.report-mode {
+    min-height: 76px;
+  }
+
+  .stage-header.report-mode h1 {
+    max-width: calc(100vw - 144px);
+    font-size: 18px;
   }
 
   .eyebrow {
