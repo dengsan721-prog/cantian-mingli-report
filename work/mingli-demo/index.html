@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f5ee" />
     <title>参天 · 命理综合研判</title>
-    <link rel="stylesheet" href="./styles.css?v=20260918-16" />
+    <link rel="stylesheet" href="./styles.css?v=20260918-17" />
   </head>
   <body>
     <div class="app-shell">
@@ -41,12 +41,13 @@
             <h1 id="pageTitle">建立命盘，信息越准，研判越稳</h1>
           </div>
           <div class="header-actions" id="reportActions" hidden>
-            <button class="secondary-button" id="editReportButton" type="button">修改资料</button>
+            <button class="secondary-button" id="editReportButton" type="button">修改</button>
           </div>
         </header>
 
         <section class="form-view" id="formView">
           <form id="birthForm" novalidate>
+            <div class="form-error-summary" id="formErrorSummary" role="alert" hidden></div>
             <section class="form-section birth-section" aria-labelledby="identityHeading">
               <div class="section-heading">
                 <span>01</span>
@@ -153,6 +154,7 @@
                 <label class="field full-mobile">
                   <span>出生地点 <b>*</b></span>
                   <input id="birthplace" name="birthplace" required maxlength="160" list="birthplaceOptions" placeholder="选择常用地点，或输入详细地址" autocomplete="off" />
+                  <span class="place-resolution" id="placeResolution" hidden></span>
                   <datalist id="birthplaceOptions"></datalist>
                   <span class="quick-place-label" id="quickPlaceLabel" hidden>常用地点</span>
                   <span class="quick-place-options" id="quickPlaceOptions"></span>
@@ -232,6 +234,7 @@
         </section>
 
         <section class="report-view" id="reportView" hidden>
+          <div class="reading-progress" aria-hidden="true"><span id="readingProgress"></span></div>
           <div class="report-hero" id="reportHero"></div>
           <div class="report-layout">
             <nav class="report-index" id="reportIndex" aria-label="报告目录"></nav>
@@ -259,7 +262,7 @@
       </div>
     </dialog>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-    <script src="./image-library.js?v=20260918-15"></script>
-    <script src="./app.js?v=20260918-16"></script>
+    <script src="./image-library.js?v=20260918-17"></script>
+    <script src="./app.js?v=20260918-17"></script>
   </body>
 </html>

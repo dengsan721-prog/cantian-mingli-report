@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sqlite3
 import sys
@@ -17,7 +18,13 @@ SYSTEM_SCRIPTS = ROOT.parent / "mingli-system" / "scripts"
 sys.path.insert(0, str(SYSTEM_SCRIPTS))
 sys.path.insert(0, str(ROOT))
 
-from report_engine import dumps, generate_report  # noqa: E402
+from report_engine import (  # noqa: E402
+    MODEL_VERSION,
+    dumps,
+    generate_report,
+    lunar_year_options,
+    resolve_birthplace,
+)
 
 
 DEFAULT_DB = ROOT / "data" / "demo_records.db"
@@ -49,16 +56,65 @@ def connect(db_path: Path) -> sqlite3.Connection:
         )
         """
     )
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(report_records)")}
+    for column, definition in (
+        ("input_fingerprint", "TEXT"),
+        ("model_version", "TEXT NOT NULL DEFAULT 'legacy'"),
+    ):
+        if column not in columns:
+            conn.execute(f"ALTER TABLE report_records ADD COLUMN {column} {definition}")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_report_fingerprint_version "
+        "ON report_records(input_fingerprint, model_version)"
+    )
     conn.commit()
     return conn
 
 
+def report_fingerprint(input_data: dict[str, object]) -> str:
+    canonical = {
+        "name": input_data.get("name"),
+        "gender": input_data.get("gender"),
+        "calendarType": input_data.get("calendarType"),
+        "year": input_data.get("year"),
+        "month": input_data.get("month"),
+        "day": input_data.get("day"),
+        "isLeapMonth": input_data.get("isLeapMonth"),
+        "solarDate": input_data.get("solarDate"),
+        "timeText": input_data.get("timeText"),
+        "timePrecision": input_data.get("timePrecision"),
+        "birthplace": input_data.get("resolvedPlace") or input_data.get("birthplace"),
+        "longitude": input_data.get("longitude"),
+        "latitude": input_data.get("latitude"),
+        "timezone": input_data.get("timezone"),
+        "calendarVerified": input_data.get("calendarVerified"),
+        "timeStandardVerified": input_data.get("timeStandardVerified"),
+        "events": input_data.get("events") or [],
+    }
+    stable = json.dumps(canonical, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(stable.encode("utf-8")).hexdigest()
+
+
 def save_report(db_path: Path, generated: dict[str, object]) -> dict[str, object]:
-    record_id = uuid.uuid4().hex
-    now = datetime.now().astimezone().isoformat(timespec="seconds")
     input_data = generated["input"]
     quality = generated["quality"]
     assert isinstance(input_data, dict) and isinstance(quality, dict)
+    fingerprint = report_fingerprint(input_data)
+    model_version = str(generated.get("report", {}).get("modelVersion") or MODEL_VERSION)
+    conn = connect(db_path)
+    existing = conn.execute(
+        "SELECT record_id FROM report_records WHERE input_fingerprint = ? AND model_version = ? "
+        "ORDER BY created_at DESC LIMIT 1",
+        (fingerprint, model_version),
+    ).fetchone()
+    conn.close()
+    if existing:
+        record = get_report(db_path, existing["record_id"])
+        assert record is not None
+        return {**record, "reused": True}
+
+    record_id = uuid.uuid4().hex
+    now = datetime.now().astimezone().isoformat(timespec="seconds")
     birth_date_text = f"{input_data['calendarType']} {input_data['year']}-{input_data['month']}-{input_data['day']}"
     conn = connect(db_path)
     try:
@@ -67,8 +123,9 @@ def save_report(db_path: Path, generated: dict[str, object]) -> dict[str, object
             INSERT INTO report_records (
               record_id, name, gender, birth_date_text, birthplace,
               quality_level, max_report_level, input_json, chart_json,
-              quality_json, rectification_json, report_json, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              quality_json, rectification_json, report_json, created_at, updated_at,
+              input_fingerprint, model_version
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 record_id,
@@ -85,12 +142,21 @@ def save_report(db_path: Path, generated: dict[str, object]) -> dict[str, object
                 dumps(generated["report"]),
                 now,
                 now,
+                fingerprint,
+                model_version,
             ),
         )
         conn.commit()
     finally:
         conn.close()
-    return {"recordId": record_id, "createdAt": now, **generated}
+    return {
+        "recordId": record_id,
+        "createdAt": now,
+        "inputFingerprint": fingerprint,
+        "modelVersion": model_version,
+        "reused": False,
+        **generated,
+    }
 
 
 def list_reports(db_path: Path, query: str = "") -> list[dict[str, object]]:
@@ -98,7 +164,8 @@ def list_reports(db_path: Path, query: str = "") -> list[dict[str, object]]:
     try:
         sql = """
             SELECT record_id, name, gender, birth_date_text, birthplace,
-                   quality_level, max_report_level, created_at
+                   quality_level, max_report_level, created_at,
+                   input_fingerprint, model_version
             FROM report_records
         """
         params: tuple[object, ...] = ()
@@ -117,6 +184,8 @@ def list_reports(db_path: Path, query: str = "") -> list[dict[str, object]]:
                 "qualityLevel": row["quality_level"],
                 "maxReportLevel": row["max_report_level"],
                 "createdAt": row["created_at"],
+                "inputFingerprint": row["input_fingerprint"],
+                "modelVersion": row["model_version"],
             }
             for row in conn.execute(sql, params)
         ]
@@ -133,6 +202,8 @@ def get_report(db_path: Path, record_id: str) -> dict[str, object] | None:
         return {
             "recordId": row["record_id"],
             "createdAt": row["created_at"],
+            "inputFingerprint": row["input_fingerprint"],
+            "modelVersion": row["model_version"],
             "input": json.loads(row["input_json"]),
             "chart": json.loads(row["chart_json"]),
             "quality": json.loads(row["quality_json"]),
@@ -179,6 +250,18 @@ class DemoHandler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/api/health":
             self.send_json({"ok": True})
+            return
+        if parsed.path == "/api/calendar/lunar":
+            try:
+                year = int(parse_qs(parsed.query).get("year", [""])[0])
+                self.send_json(lunar_year_options(year))
+            except (TypeError, ValueError) as exc:
+                self.send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
+            return
+        if parsed.path == "/api/places":
+            query = parse_qs(parsed.query).get("q", [""])[0].strip()
+            match = resolve_birthplace(query)
+            self.send_json({"match": match})
             return
         if parsed.path == "/api/reports":
             query = parse_qs(parsed.query).get("q", [""])[0].strip()

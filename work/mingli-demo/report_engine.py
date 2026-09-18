@@ -10,7 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from lunar_python import Lunar
+from lunar_python import Lunar, LunarYear, Solar
 
 
 ROOT = Path(__file__).resolve().parent
@@ -44,6 +44,75 @@ BRANCH_ELEMENT = {
     "辰": "土", "戌": "土", "丑": "土", "未": "土",
     "申": "金", "酉": "金", "亥": "水", "子": "水",
 }
+
+BRANCH_COMBINATIONS = {frozenset(pair) for pair in ("子丑", "寅亥", "卯戌", "辰酉", "巳申", "午未")}
+BRANCH_CLASHES = {frozenset(pair) for pair in ("子午", "丑未", "寅申", "卯酉", "辰戌", "巳亥")}
+
+EVENT_TEN_GOD_HINTS = {
+    "事业": ("官", "杀", "印"),
+    "教育": ("印", "食", "伤"),
+    "财务": ("财",),
+    "关系": ("财", "官", "杀"),
+    "子女": ("食", "伤"),
+    "迁移": ("冲", "驿"),
+    "健康": ("冲", "杀"),
+    "亲属": ("印", "比", "劫"),
+    "其他": (),
+}
+
+MODEL_VERSION = "mingli-report-v2"
+
+PLACE_PRESETS = (
+    {
+        "label": "陕西省西安市雁塔区",
+        "aliases": ("西安市雁塔区", "雁塔区", "西北妇幼保健院"),
+        "longitude": 108.94,
+        "latitude": 34.22,
+        "timezone": "Asia/Shanghai",
+    },
+    {
+        "label": "陕西省西安市",
+        "aliases": ("陕西西安", "西安市", "西安"),
+        "longitude": 108.94,
+        "latitude": 34.34,
+        "timezone": "Asia/Shanghai",
+    },
+    {
+        "label": "陕西省商洛市山阳县",
+        "aliases": ("商洛市山阳县", "陕西山阳县", "山阳县", "西照川镇", "中村镇"),
+        "longitude": 109.88,
+        "latitude": 33.53,
+        "timezone": "Asia/Shanghai",
+    },
+    {
+        "label": "陕西省商洛市",
+        "aliases": ("陕西商洛", "商洛市", "商洛"),
+        "longitude": 109.94,
+        "latitude": 33.87,
+        "timezone": "Asia/Shanghai",
+    },
+    {
+        "label": "陕西省宝鸡市陈仓区",
+        "aliases": ("宝鸡市陈仓区", "陈仓区", "周原镇", "马家沟村", "营子头村"),
+        "longitude": 107.37,
+        "latitude": 34.36,
+        "timezone": "Asia/Shanghai",
+    },
+    {
+        "label": "陕西省宝鸡市",
+        "aliases": ("陕西宝鸡", "宝鸡市", "宝鸡"),
+        "longitude": 107.24,
+        "latitude": 34.36,
+        "timezone": "Asia/Shanghai",
+    },
+    {
+        "label": "中国香港",
+        "aliases": ("香港特别行政区", "中国香港", "香港"),
+        "longitude": 114.17,
+        "latitude": 22.32,
+        "timezone": "Asia/Hong_Kong",
+    },
+)
 
 NOTABLE_PUBLIC_NAMES = {
     "WD_Q937": "阿尔伯特·爱因斯坦",
@@ -343,6 +412,43 @@ def _system_imports() -> tuple[Any, Any, Any]:
     return calculate_chart, parse_time, true_solar_time
 
 
+def lunar_year_options(year: int) -> dict[str, Any]:
+    if not 1000 <= year <= 2100:
+        raise ValueError("农历年份暂支持 1000—2100 年")
+    months = [
+        {
+            "month": abs(item.getMonth()),
+            "isLeap": item.getMonth() < 0,
+            "days": item.getDayCount(),
+        }
+        for item in LunarYear.fromYear(year).getMonthsInYear()
+    ]
+    leap_month = next((item["month"] for item in months if item["isLeap"]), 0)
+    return {"year": year, "leapMonth": leap_month, "months": months}
+
+
+def resolve_birthplace(value: str) -> dict[str, Any] | None:
+    query = re.sub(r"\s+", "", str(value or "").strip())
+    if not query:
+        return None
+    ranked: list[tuple[int, dict[str, Any]]] = []
+    for place in PLACE_PRESETS:
+        terms = (place["label"], *place["aliases"])
+        score = max((len(term) for term in terms if term in query or query in term), default=0)
+        if score:
+            ranked.append((score, place))
+    if not ranked:
+        return None
+    place = max(ranked, key=lambda item: item[0])[1]
+    return {
+        "label": place["label"],
+        "longitude": place["longitude"],
+        "latitude": place["latitude"],
+        "timezone": place["timezone"],
+        "source": "内置行政区坐标库",
+    }
+
+
 def optional_float(value: Any, field_name: str) -> float | None:
     if value is None or value == "":
         return None
@@ -404,15 +510,36 @@ def normalize_input(payload: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("阳历出生日期不合法") from exc
         solar_date = f"{year:04d}-{month:02d}-{day:02d}"
     else:
-        lunar_month = -month if bool(payload.get("isLeapMonth")) else month
+        is_leap_month = bool(payload.get("isLeapMonth"))
+        calendar_options = lunar_year_options(year)
+        selected_month = next(
+            (
+                item
+                for item in calendar_options["months"]
+                if item["month"] == month and item["isLeap"] is is_leap_month
+            ),
+            None,
+        )
+        if selected_month is None or day > selected_month["days"]:
+            raise ValueError("农历日期不存在，请重新选择月份、闰月和日期")
+        lunar_month = -month if is_leap_month else month
         try:
             solar_date = Lunar.fromYmd(year, lunar_month, day).getSolar().toYmd()
         except Exception as exc:
             raise ValueError("农历日期无法换算，请检查日期和闰月") from exc
 
     time_text = str(payload.get("timeText") or payload.get("time") or "").strip()
+    birthplace = str(payload.get("birthplace") or "").strip()
+    resolved_place = resolve_birthplace(birthplace)
     longitude = optional_float(payload.get("longitude"), "经度")
     latitude = optional_float(payload.get("latitude"), "纬度")
+    timezone = str(payload.get("timezone") or "").strip() or None
+    geo_source = "用户填写" if longitude is not None or latitude is not None else None
+    if resolved_place and longitude is None and latitude is None:
+        longitude = resolved_place["longitude"]
+        latitude = resolved_place["latitude"]
+        timezone = timezone or resolved_place["timezone"]
+        geo_source = resolved_place["source"]
     if longitude is not None and not -180 <= longitude <= 180:
         raise ValueError("经度必须在 -180 到 180 之间")
     if latitude is not None and not -90 <= latitude <= 90:
@@ -428,10 +555,12 @@ def normalize_input(payload: dict[str, Any]) -> dict[str, Any]:
         "solarDate": solar_date,
         "timeText": time_text,
         "timePrecision": classify_time_precision(time_text),
-        "birthplace": str(payload.get("birthplace") or "").strip(),
+        "birthplace": birthplace,
         "longitude": longitude,
         "latitude": latitude,
-        "timezone": str(payload.get("timezone") or "").strip() or None,
+        "timezone": timezone,
+        "geoSource": geo_source,
+        "resolvedPlace": resolved_place["label"] if resolved_place else None,
         "calendarVerified": bool(payload.get("calendarVerified")),
         "timeStandardVerified": bool(payload.get("timeStandardVerified")),
         "events": normalize_events(payload.get("events")),
@@ -517,7 +646,147 @@ def true_solar_variant(data: dict[str, Any], chart: dict[str, Any]) -> dict[str,
         "correctionMinutes": round(correction, 2),
         "hourPillar": solar_chart["hour_pillar"] if solar_chart else None,
         "changesHourPillar": bool(solar_chart and solar_chart["hour_pillar"] != chart.get("hour_pillar")),
+        "alternateChart": solar_chart if solar_chart and solar_chart["hour_pillar"] != chart.get("hour_pillar") else None,
     }
+
+
+def luck_cycle_summary(data: dict[str, Any]) -> dict[str, Any] | None:
+    if data["gender"] not in {"male", "female"}:
+        return None
+    calculate_chart, parse_time, _ = _system_imports()
+    parsed = parse_time(data["timeText"], data["timePrecision"])
+    hour, minute = parsed or (12, 0)
+    year, month, day = (int(part) for part in data["solarDate"].split("-"))
+    eight_char = Solar.fromYmdHms(year, month, day, hour, minute, 0).getLunar().getEightChar()
+    yun = eight_char.getYun(1 if data["gender"] == "male" else 0)
+    cycles = [
+        {
+            "startYear": item.getStartYear(),
+            "endYear": item.getEndYear(),
+            "ganZhi": item.getGanZhi(),
+        }
+        for item in yun.getDaYun()
+        if item.getGanZhi()
+    ][:8]
+    current_year = datetime.now().year
+    current = next(
+        (item for item in cycles if item["startYear"] <= current_year <= item["endYear"]),
+        None,
+    )
+    return {
+        "direction": "顺排" if yun.isForward() else "逆排",
+        "startAge": {
+            "years": yun.getStartYear(),
+            "months": yun.getStartMonth(),
+            "days": yun.getStartDay(),
+        },
+        "startDate": yun.getStartSolar().toYmd(),
+        "cycles": cycles,
+        "current": current,
+        "method": "传统节气起运法（lunar_python，流派参数 sect=1）",
+    }
+
+
+def _event_year_branch(event: dict[str, str]) -> str | None:
+    match = re.match(r"^(\d{4})(?:-(\d{2}))?", event["date"])
+    if not match:
+        return None
+    year = int(match.group(1))
+    month = int(match.group(2) or 7)
+    calculate_chart, _, _ = _system_imports()
+    chart = calculate_chart(f"{year:04d}-{month:02d}-15", "12:00", "exact")
+    return chart["year_pillar"][1] if chart else None
+
+
+def _candidate_event_score(chart: dict[str, Any], event: dict[str, str]) -> tuple[float, list[str]]:
+    hour_pillar = chart.get("hour_pillar") or ""
+    hour_branch = hour_pillar[1] if len(hour_pillar) > 1 else ""
+    hour_tag = next((item for item in chart["ten_god_tags"] if item.get("pillar") == "hour"), {})
+    god_text = "".join([str(hour_tag.get("stem") or ""), *[str(item) for item in hour_tag.get("branches") or []]])
+    event_branch = _event_year_branch(event)
+    score = 0.0
+    reasons: list[str] = []
+    hints = EVENT_TEN_GOD_HINTS.get(event["type"], ())
+    matched_hints = [hint for hint in hints if hint in god_text]
+    if matched_hints:
+        score += 2.0
+        reasons.append(f"时柱十神含{'、'.join(matched_hints)}")
+    if event_branch and hour_branch:
+        pair = frozenset((event_branch, hour_branch))
+        if event_branch == hour_branch:
+            score += 1.0
+            reasons.append("事件年支与候选时支同位")
+        if pair in BRANCH_COMBINATIONS:
+            score += 2.0
+            reasons.append("事件年支与候选时支六合")
+        if pair in BRANCH_CLASHES:
+            score += 2.5
+            reasons.append("事件年支触发候选时支六冲")
+    return score, reasons
+
+
+def build_report_claims(
+    data: dict[str, Any],
+    chart: dict[str, Any],
+    quality: dict[str, Any],
+    strongest: str,
+    weakest: str,
+    profile: dict[str, str],
+    relation_text: str,
+    theme_text: str,
+    luck_cycles: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    base_confidence = "较高" if quality["level"] == "L4" else "中等" if quality["level"] == "L3" else "基础"
+    claims = [
+        {
+            "id": "CLAIM_CORE_STRENGTH",
+            "category": "性情与能力",
+            "claim": f"更容易通过{profile['strength']}建立长期优势。",
+            "evidence": [f"日主为{chart['day_master']}", f"月令为{chart['month_command']}", f"表层五行以{strongest}较显"],
+            "counterEvidence": [f"{weakest}相对较少，遇到相关任务时更依赖环境、制度或伙伴"],
+            "confidence": base_confidence,
+            "action": profile["practice"],
+        },
+        {
+            "id": "CLAIM_PRESSURE_PATTERN",
+            "category": "压力模式",
+            "claim": f"压力升高时，容易出现“{profile['risk']}”的惯性。",
+            "evidence": [f"{strongest}力量较显", f"季节标记：{'、'.join(chart['climate_tags']) or '待复核'}"],
+            "counterEvidence": ["真实教育、职业和家庭环境可能改变这一倾向的表现方式"],
+            "confidence": base_confidence,
+            "action": profile["restore"],
+        },
+        {
+            "id": "CLAIM_RELATION_PATTERN",
+            "category": "关系互动",
+            "claim": f"关系中的关键课题是把行动、感受与边界说到同一层面。",
+            "evidence": [f"日主表达倾向：{profile['bond']}", f"合冲结构：{relation_text}"],
+            "counterEvidence": ["伴侣性格、关系阶段与共同经历仍会显著改变互动结果"],
+            "confidence": "中等",
+            "action": "重要讨论先说感受和需求，再共同决定解决方案。",
+        },
+        {
+            "id": "CLAIM_CAREER_THEME",
+            "category": "事业与资源",
+            "claim": f"当前结构更值得关注{theme_text}如何形成可积累成果。",
+            "evidence": [f"十神线索：{'、'.join(sorted({tag.get('stem') for tag in chart['ten_god_tags'] if tag.get('stem') and tag.get('stem') != '日主'})) or '三柱基础信息'}"],
+            "counterEvidence": ["行业周期、教育经历、家庭资源和个人选择是现实结果的重要条件"],
+            "confidence": "中等",
+            "action": "每次接受新责任时，同时确认权限、资源和成果归属。",
+        },
+    ]
+    if luck_cycles:
+        age = luck_cycles["startAge"]
+        claims.append({
+            "id": "CLAIM_LUCK_CYCLE_FACT",
+            "category": "大运节律",
+            "claim": f"按当前采用的起运法，大运{luck_cycles['direction']}，约 {age['years']} 岁 {age['months']} 个月起运。",
+            "evidence": [f"起运日期：{luck_cycles['startDate']}", luck_cycles["method"]],
+            "counterEvidence": ["不同流派的起运天数折算法可能形成数月级差异，应保留算法版本"],
+            "confidence": "计算结果",
+            "action": "把大运作为十年背景观察，不用单一干支替代现实决策。",
+        })
+    return claims
 
 
 def rectification_candidates(data: dict[str, Any], quality: dict[str, Any]) -> dict[str, Any]:
@@ -526,18 +795,48 @@ def rectification_candidates(data: dict[str, Any], quality: dict[str, Any]) -> d
     if quality["eventCount"] < 5 or quality["eventTypeCount"] < 3:
         return {"status": "insufficient_events", "candidates": []}
     calculate_chart, _, _ = _system_imports()
+    ordered_events = sorted(data["events"], key=lambda item: item["date"])
+    calibration_count = max(3, min(len(ordered_events) - 2, round(len(ordered_events) * 0.7)))
+    calibration_events = ordered_events[:calibration_count]
+    holdout_events = ordered_events[calibration_count:]
     candidates = []
     for branch, hour in BRANCH_MIDPOINT_HOURS.items():
         chart = calculate_chart(data["solarDate"], f"{hour:02d}:00", "exact")
+        calibration_score = 0.0
+        supporting: list[dict[str, Any]] = []
+        for event in calibration_events:
+            event_score, reasons = _candidate_event_score(chart, event)
+            calibration_score += event_score
+            if reasons:
+                supporting.append({"date": event["date"], "type": event["type"], "reasons": reasons})
+        holdout_support = 0
+        for event in holdout_events:
+            event_score, _ = _candidate_event_score(chart, event)
+            if event_score > 0:
+                holdout_support += 1
         candidates.append({
             "branch": branch,
             "hourPillar": chart["hour_pillar"] if chart else None,
-            "probability": round(1 / 12, 6),
+            "rawScore": calibration_score,
+            "supportingEvents": supporting[:3],
+            "holdoutSupport": holdout_support,
+            "holdoutCount": len(holdout_events),
         })
+    scores = [item["rawScore"] for item in candidates]
+    low, high = min(scores), max(scores)
+    for item in candidates:
+        normalized = 50 if high == low else 35 + (item["rawScore"] - low) / (high - low) * 50
+        item["matchScore"] = round(normalized)
+    candidates.sort(key=lambda item: (-item["matchScore"], -item["holdoutSupport"], item["branch"]))
+    for rank, item in enumerate(candidates, start=1):
+        item["rank"] = rank
     return {
         "status": "candidate_only",
+        "rankingMethod": "experimental_structural_match_v1",
         "candidates": candidates,
-        "disclosure": "事件资料已达到启动校时的门槛，但当前模型尚未通过盲测校准，因此只展示候选时辰，不替用户选择。",
+        "calibrationEventCount": len(calibration_events),
+        "holdoutEventCount": len(holdout_events),
+        "disclosure": "以下为实验性结构匹配分：较早事件用于候选排序，较晚事件只作独立复核。该分数不是概率，模型尚未通过足量已知时辰样本的盲测，因此不替用户确认出生时辰。",
     }
 
 
@@ -550,6 +849,7 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("无法根据当前资料完成排盘")
     quality = quality_assessment(data)
     solar_variant = true_solar_variant(data, chart)
+    luck_cycles = luck_cycle_summary(data)
     elements = element_counts(chart)
     strongest = max(elements, key=elements.get)
     weakest = min(elements, key=elements.get)
@@ -559,13 +859,19 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
     pillars = [chart["year_pillar"], chart["month_pillar"], chart["day_pillar"]]
     if chart.get("hour_pillar"):
         pillars.append(chart["hour_pillar"])
+    ten_god_tags = list(chart["ten_god_tags"])
+    if solar_variant and solar_variant.get("alternateChart"):
+        ten_god_tags.extend(solar_variant["alternateChart"]["ten_god_tags"])
     ten_gods = sorted({
         item
-        for tag in chart["ten_god_tags"]
+        for tag in ten_god_tags
         for item in ([tag.get("stem")] + list(tag.get("branches") or []))
         if item and item != "日主"
     })
-    relation_text = "；".join(chart["conflict_combination_tags"]) or "当前柱位未形成需要优先标记的合冲结构"
+    relation_tags = list(chart["conflict_combination_tags"])
+    if solar_variant and solar_variant.get("alternateChart"):
+        relation_tags.extend(solar_variant["alternateChart"]["conflict_combination_tags"])
+    relation_text = "；".join(sorted(set(relation_tags))) or "当前柱位未形成需要优先标记的合冲结构"
     if solar_variant:
         hour_boundary = (
             f"真太阳时校正 {solar_variant['correctionMinutes']} 分钟，校正时柱为"
@@ -599,6 +905,30 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
         if data["events"]
         else "你暂时没有填写过往经历，所以这一版先从命盘结构讲起，不会拿陌生模板替你虚构已经发生的故事。"
     )
+    claims = build_report_claims(
+        data,
+        chart,
+        quality,
+        strongest,
+        weakest,
+        profile,
+        relation_text,
+        theme_text,
+        luck_cycles,
+    )
+    luck_cycle_context = ""
+    if luck_cycles:
+        current_cycle = luck_cycles.get("current")
+        age = luck_cycles["startAge"]
+        current_text = (
+            f"当前历法年份落在 {current_cycle['startYear']}—{current_cycle['endYear']} 年的{current_cycle['ganZhi']}运。"
+            if current_cycle
+            else "当前年份未落入已列出的八步大运范围。"
+        )
+        luck_cycle_context = (
+            f"按当前算法，大运{luck_cycles['direction']}，约 {age['years']} 岁 {age['months']} 个月起运；"
+            f"{current_text}这是一条时间背景线，仍需结合具体流年和现实事件复核。"
+        )
 
     sections = [
         {
@@ -712,6 +1042,7 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
                 f"转折未必都以戏剧性的方式到来。它可能先表现为一段时间越来越忙、原有方法开始不够用，随后才变成换工作、搬迁、关系重新定位，或者对“以后要怎样生活”产生新的答案。{event_context}",
                 f"当{strongest}的力量被环境放大时，机会与压力往往一起来：一方面更容易被看见、被需要，另一方面也更容易陷入“{dominant_profile['risk']}”。真正决定这次变化是上升还是消耗的，是能否在开始之前谈清资源和边界。",
                 f"相对而言，值得主动争取的变化，是那些能让{profile['strength']}成为长期资产的机会；需要谨慎的变化，则是只靠情绪推动、承诺很多却没有实际支撑的选择。",
+                luck_cycle_context or "因性别资料未知或起运条件不足，本版不排列大运，避免用缺失信息给出虚假的时间结论。",
             ],
             "listTitle": "未来遇到变化时，先观察",
             "items": [
@@ -719,7 +1050,7 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
                 "这次选择是在逃离短期情绪，还是靠近长期想要的生活。",
                 "三个月后回看，身体、关系和现金流是否仍能承受。",
             ],
-            "note": "未接入完整大运起运和流年校验前，本章只判断转折类型，不给出具体年份的确定断语。",
+            "note": "大运已经按固定算法排列；流年事件解释仍处于结构复核阶段，因此不把某一年写成必然发生的结果。",
         },
         {
             "id": "wellbeing",
@@ -834,13 +1165,22 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
     ]
     return {
         "input": data,
-        "chart": {**chart, "pillars": pillars, "elements": elements, "trueSolarVariant": solar_variant},
+        "chart": {
+            **chart,
+            "pillars": pillars,
+            "elements": elements,
+            "trueSolarVariant": solar_variant,
+            "luckCycles": luck_cycles,
+        },
         "quality": quality,
         "rectification": rectification_candidates(data, quality),
         "report": {
             "title": f"{data['name']}命理综合研判报告",
             "generatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "modelVersion": MODEL_VERSION,
             "highlights": highlights,
+            "claims": claims,
+            "luckCycles": luck_cycles,
             "sections": sections,
             "foundation": {
                 "modelName": "多源命理结构研判模型",

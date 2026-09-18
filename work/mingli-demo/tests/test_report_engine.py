@@ -10,7 +10,7 @@ DEMO_ROOT = Path(__file__).resolve().parents[1]
 if str(DEMO_ROOT) not in sys.path:
     sys.path.insert(0, str(DEMO_ROOT))
 
-from report_engine import generate_report  # noqa: E402
+from report_engine import generate_report, lunar_year_options, resolve_birthplace  # noqa: E402
 from server import delete_report, get_report, list_reports, save_report  # noqa: E402
 
 
@@ -57,6 +57,7 @@ class ReportEngineTests(unittest.TestCase):
         self.assertEqual(generated["quality"]["maxReportLevel"], "四柱综合报告")
         self.assertEqual(len(generated["chart"]["pillars"]), 4)
         self.assertTrue(generated["chart"]["trueSolarVariant"]["changesHourPillar"])
+        self.assertIsNotNone(generated["chart"]["trueSolarVariant"]["alternateChart"])
         self.assertIn("FEWER_THAN_FIVE_EVENTS", generated["quality"]["reasonCodes"])
         self.assertEqual(len(generated["report"]["sections"]), 10)
         self.assertTrue(all(section.get("scenes") for section in generated["report"]["sections"]))
@@ -64,6 +65,9 @@ class ReportEngineTests(unittest.TestCase):
         self.assertTrue(all(section.get("technical") for section in generated["report"]["sections"]))
         self.assertTrue(all(section.get("insight") for section in generated["report"]["sections"]))
         self.assertEqual(len(generated["report"]["highlights"]), 4)
+        self.assertGreaterEqual(len(generated["report"]["claims"]), 5)
+        self.assertTrue(all(item["evidence"] for item in generated["report"]["claims"]))
+        self.assertTrue(generated["chart"]["luckCycles"]["cycles"])
         foundation = generated["report"]["foundation"]
         self.assertGreater(foundation["stats"]["chartSnapshots"], 1000)
         self.assertGreater(foundation["coverage"]["birthSpanYears"], 1000)
@@ -88,18 +92,62 @@ class ReportEngineTests(unittest.TestCase):
 
         self.assertEqual(generated["rectification"]["status"], "candidate_only")
         self.assertEqual(len(generated["rectification"]["candidates"]), 12)
-        self.assertTrue(all(item["probability"] == 0.083333 for item in generated["rectification"]["candidates"]))
+        self.assertEqual(generated["rectification"]["rankingMethod"], "experimental_structural_match_v1")
+        self.assertTrue(all("matchScore" in item for item in generated["rectification"]["candidates"]))
+        self.assertGreater(
+            len({item["matchScore"] for item in generated["rectification"]["candidates"]}),
+            1,
+        )
+        self.assertEqual(generated["rectification"]["calibrationEventCount"], 3)
+        self.assertEqual(generated["rectification"]["holdoutEventCount"], 2)
         self.assertIsNone(generated["chart"]["hour_pillar"])
+
+    def test_lunar_options_and_place_resolution_are_calendar_aware(self) -> None:
+        options = lunar_year_options(2020)
+        self.assertEqual(options["leapMonth"], 4)
+        leap_month = next(item for item in options["months"] if item["isLeap"])
+        self.assertEqual(leap_month["month"], 4)
+        place = resolve_birthplace("陕西省宝鸡市陈仓区周原镇马家沟村")
+        self.assertEqual(place["label"], "陕西省宝鸡市陈仓区")
+        self.assertEqual(place["timezone"], "Asia/Shanghai")
+
+    def test_gender_changes_luck_cycle_direction_without_changing_base_chart(self) -> None:
+        male = generate_report(exact_payload())
+        payload = exact_payload()
+        payload["gender"] = "female"
+        female = generate_report(payload)
+        self.assertEqual(male["chart"]["pillars"], female["chart"]["pillars"])
+        self.assertNotEqual(
+            male["chart"]["luckCycles"]["direction"],
+            female["chart"]["luckCycles"]["direction"],
+        )
+
+    def test_birthplace_can_fill_coordinates_and_timezone(self) -> None:
+        payload = exact_payload()
+        payload["longitude"] = None
+        payload["latitude"] = None
+        payload["timezone"] = None
+        generated = generate_report(payload)
+        self.assertEqual(generated["input"]["geoSource"], "内置行政区坐标库")
+        self.assertIsNotNone(generated["chart"]["trueSolarVariant"])
 
     def test_records_can_be_saved_searched_loaded_and_deleted(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             db_path = Path(temporary_directory) / "records.db"
             saved = save_report(db_path, generate_report(exact_payload()))
+            reused = save_report(db_path, generate_report(exact_payload()))
+            alias_payload = exact_payload()
+            alias_payload["birthplace"] = "西北妇幼保健院"
+            reused_alias = save_report(db_path, generate_report(alias_payload))
 
             matches = list_reports(db_path, "邓易安")
             loaded = get_report(db_path, saved["recordId"])
 
             self.assertEqual(len(matches), 1)
+            self.assertTrue(reused["reused"])
+            self.assertTrue(reused_alias["reused"])
+            self.assertEqual(saved["recordId"], reused["recordId"])
+            self.assertEqual(saved["recordId"], reused_alias["recordId"])
             self.assertEqual(loaded["input"]["name"], "邓易安")
             self.assertTrue(delete_report(db_path, saved["recordId"]))
             self.assertEqual(list_reports(db_path), [])

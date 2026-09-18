@@ -6,6 +6,9 @@ const state = {
   history: [],
   toastTimer: null,
   searchTimer: null,
+  placeTimer: null,
+  lunarCache: new Map(),
+  lunarRequest: 0,
 };
 
 const form = $("#birthForm");
@@ -97,17 +100,48 @@ function populateTimeSelects() {
   }
 }
 
-function updateDayOptions() {
+async function loadLunarCalendar(year) {
+  if (!year) return null;
+  if (!state.lunarCache.has(year)) {
+    state.lunarCache.set(year, api(`/api/calendar/lunar?year=${encodeURIComponent(year)}`));
+  }
+  try {
+    return await state.lunarCache.get(year);
+  } catch (error) {
+    state.lunarCache.delete(year);
+    throw error;
+  }
+}
+
+async function updateDayOptions() {
   const day = $("#day");
   const previous = day.value;
   const year = Number($("#year").value);
   const month = Number($("#month").value);
   const calendar = $('input[name="calendarType"]:checked')?.value || "solar";
-  const maxDay = calendar === "lunar"
-    ? 30
-    : year && month
-      ? new Date(year, month, 0).getDate()
-      : 31;
+  const requestId = ++state.lunarRequest;
+  let maxDay = year && month ? new Date(year, month, 0).getDate() : 31;
+  if (calendar === "lunar") {
+    maxDay = 30;
+    if (year && month) {
+      try {
+        const metadata = await loadLunarCalendar(year);
+        if (requestId !== state.lunarRequest) return;
+        const leapMonth = Number(metadata?.leapMonth || 0);
+        const leapAvailable = leapMonth === month;
+        $("#leapMonthRow").hidden = !leapAvailable;
+        if (!leapAvailable) $("#isLeapMonth").checked = false;
+        const selected = metadata?.months?.find((item) => (
+          Number(item.month) === month && Boolean(item.isLeap) === $("#isLeapMonth").checked
+        ));
+        if (selected) maxDay = Number(selected.days);
+      } catch (error) {
+        showToast(error.message, "error");
+      }
+    } else {
+      $("#leapMonthRow").hidden = true;
+    }
+  }
   day.replaceChildren();
   appendOption(day, "", "日期");
   for (let value = 1; value <= maxDay; value += 1) appendOption(day, value, `${value} 日`);
@@ -224,10 +258,42 @@ function renderQuickPlaces() {
     const button = node("button", "quick-place-button", place);
     button.type = "button";
     button.title = place;
-    button.addEventListener("click", () => setField("birthplace", place));
+    button.addEventListener("click", () => {
+      setField("birthplace", place);
+      resolvePlace();
+    });
     container.append(button);
   });
   label.hidden = places.length === 0;
+}
+
+async function resolvePlace({ quiet = false } = {}) {
+  const query = $("#birthplace").value.trim();
+  const status = $("#placeResolution");
+  if (!query) {
+    status.hidden = true;
+    status.textContent = "";
+    return null;
+  }
+  try {
+    const data = await api(`/api/places?q=${encodeURIComponent(query)}`);
+    if (!data.match) {
+      status.textContent = "地点已记录；如需真太阳时，可在精度设置中补充坐标。";
+      status.classList.remove("resolved");
+      status.hidden = false;
+      return null;
+    }
+    setField("longitude", data.match.longitude);
+    setField("latitude", data.match.latitude);
+    setField("timezone", data.match.timezone);
+    status.textContent = `已识别 ${data.match.label}，将自动校正经度与时区`;
+    status.classList.add("resolved");
+    status.hidden = false;
+    return data.match;
+  } catch (error) {
+    if (!quiet) showToast(error.message, "error");
+    return null;
+  }
 }
 
 function renderHistory() {
@@ -254,7 +320,7 @@ function renderHistory() {
     openButton.append(head, meta);
     openButton.addEventListener("click", () => openRecord(record.recordId));
 
-    const deleteButton = node("button", "history-item-delete", "×");
+    const deleteButton = node("button", "history-item-delete", "删");
     deleteButton.type = "button";
     deleteButton.setAttribute("aria-label", `删除${record.name}的查询记录`);
     deleteButton.title = "删除这条记录";
@@ -344,6 +410,12 @@ function fillForm(input) {
   setField("longitude", input.longitude);
   setField("latitude", input.latitude);
   setField("timezone", input.timezone || "Asia/Shanghai");
+  const placeStatus = $("#placeResolution");
+  if (input.geoSource) {
+    placeStatus.textContent = `已识别 ${input.resolvedPlace || input.birthplace}，经纬度与时区已带入`;
+    placeStatus.classList.add("resolved");
+    placeStatus.hidden = false;
+  }
   $("#calendarVerified").checked = Boolean(input.calendarVerified);
   $("#timeStandardVerified").checked = Boolean(input.timeStandardVerified);
   eventsList.replaceChildren();
@@ -364,6 +436,8 @@ function showForm({ keepValues = false } = {}) {
     $("#eventPanel").open = false;
     $("#precisionPanel").open = false;
     state.currentRecord = null;
+    $("#placeResolution").hidden = true;
+    $("#formErrorSummary").hidden = true;
   }
   updateEventsEmpty();
   updateCalendarControls();
@@ -436,7 +510,7 @@ function updateEventsEmpty() {
 
 function updateCalendarControls() {
   const calendar = $('input[name="calendarType"]:checked')?.value || "solar";
-  $("#leapMonthRow").hidden = calendar !== "lunar";
+  $("#leapMonthRow").hidden = true;
   if (calendar !== "lunar") $("#isLeapMonth").checked = false;
   updateDayOptions();
 }
@@ -474,12 +548,16 @@ function collectFormData() {
   };
 }
 
-function appendPillars(container, pillars) {
+function appendPillars(container, pillars, trueSolarVariant = null) {
   const labels = ["年柱", "月柱", "日柱", "时柱"];
   const strip = node("div", "pillar-strip");
   labels.forEach((label, index) => {
     const cell = node("div", "pillar-cell");
     cell.append(node("span", "", label), node("strong", "", pillars[index] || "待定"));
+    if (index === 3 && trueSolarVariant?.changesHourPillar) {
+      cell.append(node("small", "", `真太阳 ${trueSolarVariant.hourPillar}`));
+      cell.classList.add("has-variant");
+    }
     strip.append(cell);
   });
   container.append(strip);
@@ -495,6 +573,10 @@ function appendReportFacts(container, record) {
     input.birthplace || "出生地未提供",
     `换算阳历 ${input.solarDate}`,
   ];
+  if (input.geoSource) values.push(`${input.resolvedPlace || "出生地"}坐标已解析`);
+  if (record.chart.trueSolarVariant) {
+    values.push(`真太阳时校正 ${record.chart.trueSolarVariant.correctionMinutes} 分钟`);
+  }
   values.forEach((value) => facts.append(node("span", "", value)));
   container.append(facts);
 }
@@ -516,6 +598,127 @@ function pickUniqueVisual(library, categoryNames, seed, usedSources) {
   return fallback || library.pick(categories[0], seed);
 }
 
+function setReadMode(mode) {
+  const content = $("#reportContent");
+  const layout = $(".report-layout");
+  content.dataset.readMode = mode;
+  layout.dataset.readMode = mode;
+  $$(".reading-mode-button", content).forEach((button) => {
+    const active = button.dataset.mode === mode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  window.localStorage.setItem("mingliReadMode", mode);
+  updateReadingProgress();
+}
+
+function appendReadingModes(container) {
+  const modes = node("div", "reading-modes");
+  modes.setAttribute("role", "tablist");
+  [["summary", "纲要"], ["focused", "精读"], ["full", "全文"]].forEach(([mode, label]) => {
+    const button = node("button", "reading-mode-button", label);
+    button.type = "button";
+    button.dataset.mode = mode;
+    button.setAttribute("role", "tab");
+    button.addEventListener("click", () => setReadMode(mode));
+    modes.append(button);
+  });
+  container.append(modes);
+}
+
+function appendClaims(container, claims) {
+  if (!claims?.length) return;
+  const panel = node("section", "report-claims");
+  const heading = node("div", "report-claims-heading");
+  heading.append(node("span", "", "核心判断与依据"), node("small", "", "结论、证据、反证与行动放在一起看"));
+  panel.append(heading);
+  const list = node("div", "report-claims-list");
+  claims.forEach((claim, index) => {
+    const item = node("details", "report-claim");
+    if (index === 0) item.open = true;
+    const summary = node("summary");
+    const copy = node("span");
+    copy.append(node("small", "", claim.category), node("strong", "", claim.claim));
+    summary.append(copy, node("em", "", claim.confidence));
+    item.append(summary);
+    const body = node("div", "report-claim-body");
+    const evidence = node("p");
+    evidence.append(node("b", "", "支持依据"), document.createTextNode(claim.evidence.join("；")));
+    const counter = node("p");
+    counter.append(node("b", "", "保留条件"), document.createTextNode(claim.counterEvidence.join("；")));
+    const action = node("p");
+    action.append(node("b", "", "行动建议"), document.createTextNode(claim.action));
+    body.append(evidence, counter, action);
+    item.append(body);
+    list.append(item);
+  });
+  panel.append(list);
+  container.append(panel);
+}
+
+function appendLuckCycles(container, luckCycles) {
+  if (!luckCycles?.cycles?.length) return;
+  const panel = node("details", "luck-cycle-panel");
+  const age = luckCycles.startAge;
+  const summary = node("summary");
+  summary.append(
+    node("strong", "", "大运时间轴"),
+    node("span", "", `${luckCycles.direction} · 约 ${age.years} 岁 ${age.months} 个月起运`)
+  );
+  panel.append(summary);
+  const track = node("div", "luck-cycle-track");
+  luckCycles.cycles.forEach((cycle) => {
+    const item = node("div", cycle === luckCycles.current ? "current" : "");
+    item.append(node("strong", "", cycle.ganZhi), node("span", "", `${cycle.startYear}—${cycle.endYear}`));
+    track.append(item);
+  });
+  panel.append(track, node("p", "", `${luckCycles.method}。时间轴用于观察阶段背景，不把单一干支解释为必然事件。`));
+  container.append(panel);
+}
+
+function appendTechnicalSnapshot(container, record) {
+  const details = record.chart.details || {};
+  const hidden = details.hidden_stems || {};
+  const naYin = details.na_yin || {};
+  const labels = { year: "年柱", month: "月柱", day: "日柱", hour: "时柱" };
+  const panel = node("details", "technical-snapshot-panel");
+  const summary = node("summary");
+  summary.append(node("strong", "", "专业计算底稿"), node("span", "", `模型 ${record.report.modelVersion || record.modelVersion || "legacy"}`));
+  panel.append(summary);
+  const grid = node("div", "technical-snapshot-grid");
+  const rows = [
+    ["四柱", (record.chart.pillars || []).join(" · ")],
+    ["月令与节气", `${record.chart.month_command || "待定"} · ${(record.chart.climate_tags || []).join("、") || "待复核"}`],
+    ["藏干", Object.entries(hidden).map(([key, value]) => `${labels[key] || key} ${Array.isArray(value) ? value.join("/") : value}`).join("；") || "时柱待补"],
+    ["纳音", Object.entries(naYin).map(([key, value]) => `${labels[key] || key} ${value}`).join("；") || "待补"],
+    ["命宫 / 身宫", `${details.ming_gong || "待时柱"} / ${details.shen_gong || "待时柱"}`],
+    ["地理校正", record.chart.trueSolarVariant
+      ? `校正 ${record.chart.trueSolarVariant.correctionMinutes} 分钟，时柱 ${record.chart.trueSolarVariant.hourPillar}`
+      : "当前未形成真太阳时备选"],
+  ];
+  rows.forEach(([label, value]) => {
+    const item = node("div");
+    item.append(node("span", "", label), node("strong", "", value));
+    grid.append(item);
+  });
+  panel.append(grid);
+  container.append(panel);
+}
+
+function updateReadingProgress() {
+  if (reportView.hidden) return;
+  const top = reportView.offsetTop;
+  const height = Math.max(reportView.offsetHeight - window.innerHeight, 1);
+  const progress = Math.max(0, Math.min(1, (window.scrollY - top) / height));
+  $("#readingProgress").style.width = `${Math.round(progress * 100)}%`;
+  const sections = $$(".report-section:not([hidden])");
+  let activeId = "";
+  sections.forEach((section) => {
+    if (section.getBoundingClientRect().top <= 150) activeId = section.id;
+  });
+  $$("#reportIndex a").forEach((anchor) => anchor.classList.toggle("active", anchor.hash === `#${activeId}`));
+}
+
 function renderReport(record) {
   formView.hidden = true;
   reportView.hidden = false;
@@ -523,7 +726,7 @@ function renderReport(record) {
   stageHeader.classList.remove("form-mode");
   stageHeader.classList.add("report-mode");
   $("#pageEyebrow").textContent = "命理综合研判";
-  $("#pageTitle").textContent = record.report.title;
+  $("#pageTitle").textContent = `${record.input.name} · 研判报告`;
   const imageSeed = record.recordId || `${record.input.name}:${record.input.solarDate}:${record.report.generatedAt}`;
   const imageLibrary = globalThis.MingliImages;
   const usedImageSources = new Set();
@@ -541,7 +744,7 @@ function renderReport(record) {
   status.append(node("span", "", `${reportDisplayText(record.quality.maxReportLevel) || "命理综合报告"} · ${formatDateTime(record.report.generatedAt)}`));
   heroInner.append(status, node("h2", "", record.report.title));
   heroInner.append(node("p", "", "这不是给人生下定义，而是借一张传统命盘，陪你重新看看自己的性情、关系与选择。"));
-  appendPillars(heroInner, record.chart.pillars || []);
+  appendPillars(heroInner, record.chart.pillars || [], record.chart.trueSolarVariant);
   appendReportFacts(heroInner, record);
   hero.append(heroInner);
 
@@ -549,6 +752,7 @@ function renderReport(record) {
   const content = $("#reportContent");
   index.replaceChildren();
   content.replaceChildren();
+  appendReadingModes(content);
 
   if (record.report.highlights?.length) {
     const highlights = node("section", "report-highlights");
@@ -565,6 +769,10 @@ function renderReport(record) {
     content.append(highlights);
   }
 
+  appendClaims(content, record.report.claims);
+  appendLuckCycles(content, record.report.luckCycles || record.chart.luckCycles);
+  appendTechnicalSnapshot(content, record);
+
   if (record.quality.reasonText?.length) {
     const notice = node("div", "quality-notice");
     notice.append(node("strong", "", "有几处信息还可以慢慢补全"));
@@ -574,12 +782,21 @@ function renderReport(record) {
 
   if (record.rectification.status === "candidate_only") {
     const block = node("section", "rectification-block");
-    block.append(node("strong", "", "时辰反推：候选阶段"));
+    block.append(node("strong", "", "时辰反推：实验性候选排序"));
     block.append(node("span", "", record.rectification.disclosure));
     const candidates = node("div", "candidate-grid");
     record.rectification.candidates.forEach((candidate) => {
       const item = node("div");
-      item.append(node("span", "", `${candidate.branch}时`), node("small", "", candidate.hourPillar || "待算"));
+      const score = candidate.matchScore === undefined ? "未评分" : `匹配 ${candidate.matchScore}`;
+      item.append(
+        node("span", "", `${String(candidate.rank || "").padStart(2, "0")} · ${candidate.branch}时`),
+        node("small", "", `${candidate.hourPillar || "待算"} · ${score}`)
+      );
+      if (candidate.supportingEvents?.length) {
+        item.title = candidate.supportingEvents
+          .map((event) => `${event.date} ${event.type}：${event.reasons.join("、")}`)
+          .join("\n");
+      }
       candidates.append(item);
     });
     block.append(candidates);
@@ -597,7 +814,7 @@ function renderReport(record) {
       ? `${coverage.birthStartYear}—${coverage.birthEndYear} 年`
       : "年代持续扩充";
     summaryCopy.append(node("strong", "", "研判模型"));
-    summaryCopy.append(node("small", "", `${Number(foundation.stats.publicPeople).toLocaleString("zh-CN")} 位公开人物 · ${birthRange} · 双向纠偏`));
+    summaryCopy.append(node("small", "", `${Number(foundation.stats.publicPeople).toLocaleString("zh-CN")} 位公开人物 · ${Number(coverage.timedBirthRecords || 0).toLocaleString("zh-CN")} 条含时刻 · 研究验证中`));
     summary.append(summaryCopy, node("em", "", "查看模型"));
     details.append(summary);
     const body = node("div", "foundation-body");
@@ -634,7 +851,7 @@ function renderReport(record) {
       node("span", "", `${Number(validation.metricRecords || 0).toLocaleString("zh-CN")} 项验证指标`),
       node("span", "", `${foundation.knowledgeRuleCount} 条结构规则`),
       node("span", "", `${foundation.theorySourceCount} 类理论来源`),
-      node("span", "", "模型阶段：研究验证中")
+      node("span", "", "候选校时：尚未校准为概率")
     );
     coverageBlock.append(coverageMeta);
     body.append(coverageBlock);
@@ -710,6 +927,7 @@ function renderReport(record) {
   record.report.sections.forEach((section, sectionIndex) => {
     const anchor = node("a", "", section.title);
     anchor.href = `#report-${section.id}`;
+    anchor.addEventListener("click", () => setReadMode("focused"));
     index.append(anchor);
 
     const sectionNode = node("section", "report-section");
@@ -762,12 +980,69 @@ function renderReport(record) {
   });
 
   content.append(node("p", "disclosure", record.report.disclosure));
+  const preferredMode = window.localStorage.getItem("mingliReadMode");
+  setReadMode(["summary", "focused", "full"].includes(preferredMode) ? preferredMode : "focused");
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function clearFormErrors() {
+  $("#formErrorSummary").hidden = true;
+  $$(".invalid-field").forEach((element) => element.classList.remove("invalid-field"));
+  $$('[aria-invalid="true"]').forEach((element) => element.removeAttribute("aria-invalid"));
+}
+
+function validationTarget(id) {
+  const field = $(`#${id}`);
+  if (!field) return null;
+  return enhancedSelects.get(field)?.trigger || field;
+}
+
+function validateForm() {
+  clearFormErrors();
+  const issues = [];
+  const requireValue = (id, message) => {
+    const field = $(`#${id}`);
+    if (!String(field?.value || "").trim()) issues.push({ id, message });
+  };
+  requireValue("name", "请填写姓名");
+  requireValue("year", "请选择出生年份");
+  requireValue("month", "请选择出生月份");
+  requireValue("day", "请选择出生日期");
+  requireValue("birthplace", "请填写出生地点");
+  const timeMode = $('input[name="timeMode"]:checked')?.value;
+  if (timeMode === "exact") {
+    requireValue("exactHour", "请选择出生小时");
+    requireValue("exactMinute", "请选择出生分钟");
+  } else if (timeMode === "branch") {
+    requireValue("timeBranch", "请选择传统时辰");
+  }
+  $$(".event-row", eventsList).forEach((row, index) => {
+    const date = $(".event-date", row);
+    const summary = $(".event-summary-input", row);
+    if (!date.value || !summary.value.trim()) {
+      const target = !date.value ? date : summary;
+      issues.push({ element: target, message: `请补全第 ${index + 1} 条关键经历，或将它删除` });
+    }
+  });
+  if (!issues.length) return true;
+  issues.forEach((issue) => {
+    const target = issue.element || validationTarget(issue.id);
+    target?.classList.add("invalid-field");
+    target?.setAttribute("aria-invalid", "true");
+  });
+  const summary = $("#formErrorSummary");
+  summary.textContent = issues[0].message;
+  summary.hidden = false;
+  const firstTarget = issues[0].element || validationTarget(issues[0].id);
+  firstTarget?.scrollIntoView({ behavior: "smooth", block: "center" });
+  window.setTimeout(() => firstTarget?.focus(), 250);
+  return false;
 }
 
 async function submitReport(event) {
   event.preventDefault();
-  if (!form.reportValidity()) return;
+  if (!validateForm()) return;
+  await resolvePlace({ quiet: true });
   const button = $("#generateButton");
   const label = $(".button-label", button);
   button.disabled = true;
@@ -780,7 +1055,7 @@ async function submitReport(event) {
     state.currentRecord = record;
     renderReport(record);
     await loadHistory($("#historySearch").value.trim());
-    showToast("报告已生成并保存到查询记录");
+    showToast(record.reused ? "资料与模型版本一致，已打开原报告" : "报告已生成并保存到查询记录");
   } catch (error) {
     showToast(error.message, "error");
   } finally {
@@ -822,6 +1097,15 @@ $("#exactMinute").addEventListener("change", updateTimeControls);
 $("#timeBranch").addEventListener("change", updateTimeControls);
 $("#year").addEventListener("change", updateDayOptions);
 $("#month").addEventListener("change", updateDayOptions);
+$("#isLeapMonth").addEventListener("change", updateDayOptions);
+$("#birthplace").addEventListener("input", () => {
+  window.clearTimeout(state.placeTimer);
+  state.placeTimer = window.setTimeout(() => resolvePlace({ quiet: true }), 450);
+});
+form.addEventListener("input", clearFormErrors);
+form.addEventListener("change", clearFormErrors);
+window.addEventListener("scroll", updateReadingProgress, { passive: true });
+window.addEventListener("resize", updateReadingProgress);
 
 $("#historySearch").addEventListener("input", (event) => {
   window.clearTimeout(state.searchTimer);
