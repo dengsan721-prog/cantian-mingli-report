@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f5ee" />
     <title>参天 · 命理综合研判</title>
-    <link rel="stylesheet" href="./styles.css?v=20260918-8" />
+    <link rel="stylesheet" href="./styles.css?v=20260918-9" />
   </head>
   <body>
     <div class="app-shell">
@@ -37,11 +37,12 @@
       </aside>
 
       <main class="main-stage">
-        <header class="stage-header">
+        <header class="stage-header form-mode">
           <button class="icon-button mobile-only" id="historyToggle" type="button" aria-label="打开查询记录" title="查询记录">☰</button>
           <div>
             <p class="eyebrow" id="pageEyebrow">命理研判</p>
             <h1 id="pageTitle">建立命盘</h1>
+            <p class="stage-subtitle" id="pageSubtitle"><span aria-hidden="true">✦</span> 信息越准，研判越稳</p>
           </div>
           <div class="header-actions" id="reportActions" hidden>
             <button class="secondary-button" id="editReportButton" type="button">修改资料</button>
@@ -52,20 +53,6 @@
 
         <section class="form-view" id="formView">
           <form id="birthForm" novalidate>
-            <div class="form-overview">
-              <div class="form-overview-copy">
-                <span class="overview-mark" aria-hidden="true">命</span>
-                <div>
-                  <strong>信息越准，研判越稳</strong>
-                  <p>按真实记录填写，不确定可留空。</p>
-                </div>
-              </div>
-              <div class="form-progress" aria-label="填写步骤">
-                <span class="current"><b>1</b>出生资料</span>
-                <i></i>
-                <span><b>2</b>人生经历</span>
-              </div>
-            </div>
             <section class="form-section birth-section" aria-labelledby="identityHeading">
               <div class="section-heading">
                 <span>01</span>
@@ -102,18 +89,21 @@
               <div class="birth-date-grid">
                 <label class="field date-part">
                   <span class="sr-only">出生年份</span>
-                  <input id="year" name="year" type="number" required min="1000" max="2100" inputmode="numeric" placeholder="1989" />
-                  <span class="date-suffix" aria-hidden="true">年</span>
+                  <select id="year" name="year" required aria-label="出生年份">
+                    <option value="">年份</option>
+                  </select>
                 </label>
                 <label class="field date-part">
                   <span class="sr-only">出生月份</span>
-                  <input id="month" name="month" type="number" required min="1" max="12" inputmode="numeric" placeholder="3" />
-                  <span class="date-suffix" aria-hidden="true">月</span>
+                  <select id="month" name="month" required aria-label="出生月份">
+                    <option value="">月份</option>
+                  </select>
                 </label>
                 <label class="field date-part">
                   <span class="sr-only">出生日期</span>
-                  <input id="day" name="day" type="number" required min="1" max="31" inputmode="numeric" placeholder="1" />
-                  <span class="date-suffix" aria-hidden="true">日</span>
+                  <select id="day" name="day" required aria-label="出生日期">
+                    <option value="">日期</option>
+                  </select>
                 </label>
                 <label class="switch-row" id="leapMonthRow" hidden>
                   <input id="isLeapMonth" name="isLeapMonth" type="checkbox" />
@@ -123,13 +113,46 @@
               </div>
 
               <div class="fields-grid birth-place-grid">
-                <label class="field">
-                  <span>出生时刻</span>
-                  <input id="timeText" name="timeText" placeholder="05:25、亥时或不详" autocomplete="off" />
-                </label>
+                <fieldset class="field time-choice-field">
+                  <legend>出生时刻</legend>
+                  <div class="time-mode-control">
+                    <label><input type="radio" name="timeMode" value="exact" checked /><span>准确时间</span></label>
+                    <label><input type="radio" name="timeMode" value="branch" /><span>传统时辰</span></label>
+                    <label><input type="radio" name="timeMode" value="unknown" /><span>不清楚</span></label>
+                  </div>
+                  <div class="time-choice-detail">
+                    <label id="exactTimeField">
+                      <span class="sr-only">准确出生时间</span>
+                      <input id="exactTime" type="time" aria-label="准确出生时间" />
+                    </label>
+                    <label id="branchTimeField" hidden>
+                      <span class="sr-only">传统出生时辰</span>
+                      <select id="timeBranch" aria-label="传统出生时辰">
+                        <option value="">选择十二时辰</option>
+                        <option value="子时">子时 · 23:00—00:59</option>
+                        <option value="丑时">丑时 · 01:00—02:59</option>
+                        <option value="寅时">寅时 · 03:00—04:59</option>
+                        <option value="卯时">卯时 · 05:00—06:59</option>
+                        <option value="辰时">辰时 · 07:00—08:59</option>
+                        <option value="巳时">巳时 · 09:00—10:59</option>
+                        <option value="午时">午时 · 11:00—12:59</option>
+                        <option value="未时">未时 · 13:00—14:59</option>
+                        <option value="申时">申时 · 15:00—16:59</option>
+                        <option value="酉时">酉时 · 17:00—18:59</option>
+                        <option value="戌时">戌时 · 19:00—20:59</option>
+                        <option value="亥时">亥时 · 21:00—22:59</option>
+                      </select>
+                    </label>
+                    <p id="unknownTimeHint" hidden>无需猜测，系统会按无时辰模式研判。</p>
+                  </div>
+                  <input id="timeText" name="timeText" type="hidden" />
+                </fieldset>
                 <label class="field full-mobile">
                   <span>出生地点 <b>*</b></span>
-                  <input id="birthplace" name="birthplace" required maxlength="160" placeholder="省、市、区县、乡镇或医院" autocomplete="off" />
+                  <input id="birthplace" name="birthplace" required maxlength="160" list="birthplaceOptions" placeholder="选择常用地点，或输入详细地址" autocomplete="off" />
+                  <datalist id="birthplaceOptions"></datalist>
+                  <span class="quick-place-label" id="quickPlaceLabel" hidden>常用地点</span>
+                  <span class="quick-place-options" id="quickPlaceOptions"></span>
                 </label>
               </div>
 
@@ -198,7 +221,7 @@
                 <span>生成后可在查询记录中随时回来看看</span>
               </div>
               <button class="primary-button" id="generateButton" type="submit">
-                <span class="button-label">生成报告</span>
+                <span class="button-label">开启研判</span>
                 <span aria-hidden="true">→</span>
               </button>
             </div>
@@ -217,7 +240,7 @@
 
     <div class="sidebar-scrim" id="sidebarScrim" hidden></div>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-    <script src="./image-library.js?v=20260918-8"></script>
-    <script src="./app.js?v=20260918-8"></script>
+    <script src="./image-library.js?v=20260918-9"></script>
+    <script src="./app.js?v=20260918-9"></script>
   </body>
 </html>

@@ -15,6 +15,8 @@ const reportActions = $("#reportActions");
 const historyList = $("#historyList");
 const eventsList = $("#eventsList");
 const eventsEmpty = $("#eventsEmpty");
+const stageHeader = $(".stage-header");
+const earthlyBranches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 
 function node(tag, className, text) {
   const element = document.createElement(tag);
@@ -69,6 +71,38 @@ function formatBirthDate(value) {
   return `${label} ${date || ""}`;
 }
 
+function appendOption(select, value, label) {
+  const option = node("option", "", label);
+  option.value = String(value);
+  select.append(option);
+}
+
+function populateDateSelects() {
+  const year = $("#year");
+  const month = $("#month");
+  const currentYear = new Date().getFullYear();
+  for (let value = currentYear; value >= 1000; value -= 1) appendOption(year, value, `${value} 年`);
+  for (let value = 1; value <= 12; value += 1) appendOption(month, value, `${value} 月`);
+  updateDayOptions();
+}
+
+function updateDayOptions() {
+  const day = $("#day");
+  const previous = day.value;
+  const year = Number($("#year").value);
+  const month = Number($("#month").value);
+  const calendar = $('input[name="calendarType"]:checked')?.value || "solar";
+  const maxDay = calendar === "lunar"
+    ? 30
+    : year && month
+      ? new Date(year, month, 0).getDate()
+      : 31;
+  day.replaceChildren();
+  appendOption(day, "", "日期");
+  for (let value = 1; value <= maxDay; value += 1) appendOption(day, value, `${value} 日`);
+  if (Number(previous) <= maxDay) day.value = previous;
+}
+
 function genderLabel(value) {
   return { male: "男", female: "女", unknown: "未知" }[value] || "未知";
 }
@@ -93,10 +127,29 @@ async function loadHistory(query = "") {
     const data = await api(`/api/reports?q=${encodeURIComponent(query)}`);
     state.history = data.records || [];
     renderHistory();
+    renderQuickPlaces();
   } catch (error) {
     historyList.replaceChildren(node("p", "history-empty", "无法读取记录，请确认本地服务正在运行。"));
     showToast(error.message, "error");
   }
+}
+
+function renderQuickPlaces() {
+  const datalist = $("#birthplaceOptions");
+  const container = $("#quickPlaceOptions");
+  const label = $("#quickPlaceLabel");
+  const places = [...new Set(state.history.map((record) => record.birthplace).filter(Boolean))];
+  datalist.replaceChildren();
+  container.replaceChildren();
+  places.forEach((place) => appendOption(datalist, place, place));
+  places.slice(0, 3).forEach((place) => {
+    const button = node("button", "quick-place-button", place);
+    button.type = "button";
+    button.title = place;
+    button.addEventListener("click", () => setField("birthplace", place));
+    container.append(button);
+  });
+  label.hidden = places.length === 0;
 }
 
 function renderHistory() {
@@ -146,6 +199,41 @@ function setField(id, value) {
   if (field) field.value = value ?? "";
 }
 
+function branchFromHour(hour) {
+  return earthlyBranches[Math.floor(((hour + 1) % 24) / 2)];
+}
+
+function updateTimeControls() {
+  const mode = $('input[name="timeMode"]:checked')?.value || "exact";
+  $("#exactTimeField").hidden = mode !== "exact";
+  $("#branchTimeField").hidden = mode !== "branch";
+  $("#unknownTimeHint").hidden = mode !== "unknown";
+  $("#timeText").value = mode === "exact"
+    ? $("#exactTime").value
+    : mode === "branch"
+      ? $("#timeBranch").value
+      : "";
+}
+
+function fillTimeControls(value) {
+  const text = String(value || "").trim();
+  const exact = text.match(/(?:^|\D)([01]?\d|2[0-3]):([0-5]\d)(?:\D|$)/);
+  const branch = earthlyBranches.find((item) => text.includes(`${item}时`));
+  const approximateHour = text.match(/(?:^|\D)([01]?\d|2[0-3])(?:点|时)/);
+  $("#exactTime").value = "";
+  $("#timeBranch").value = "";
+  if (exact) {
+    setRadio("timeMode", "exact");
+    $("#exactTime").value = `${exact[1].padStart(2, "0")}:${exact[2]}`;
+  } else if (branch || approximateHour) {
+    setRadio("timeMode", "branch");
+    $("#timeBranch").value = `${branch || branchFromHour(Number(approximateHour[1]))}时`;
+  } else {
+    setRadio("timeMode", "unknown");
+  }
+  updateTimeControls();
+}
+
 function fillForm(input) {
   setField("name", input.name);
   setRadio("gender", input.gender);
@@ -154,7 +242,7 @@ function fillForm(input) {
   setField("month", input.month);
   setField("day", input.day);
   $("#isLeapMonth").checked = Boolean(input.isLeapMonth);
-  setField("timeText", input.timeText);
+  fillTimeControls(input.timeText);
   setField("birthplace", input.birthplace);
   setField("longitude", input.longitude);
   setField("latitude", input.latitude);
@@ -182,11 +270,14 @@ function showForm({ keepValues = false } = {}) {
   }
   updateEventsEmpty();
   updateCalendarControls();
+  updateTimeControls();
   formView.hidden = false;
   reportView.hidden = true;
   reportActions.hidden = true;
   $("#pageEyebrow").textContent = "命理研判";
   $("#pageTitle").textContent = keepValues ? "核对出生资料" : "建立命盘";
+  $("#pageSubtitle").hidden = false;
+  stageHeader.classList.add("form-mode");
   renderHistory();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -198,8 +289,7 @@ function addEventRow(eventData = {}) {
   const dateLabel = node("label", "field");
   dateLabel.append(node("span", "", "日期"));
   const dateInput = node("input", "event-date");
-  dateInput.placeholder = "例如 2016-05";
-  dateInput.inputMode = "numeric";
+  dateInput.type = "month";
   dateInput.value = eventData.date || "";
   dateLabel.append(dateInput);
 
@@ -247,6 +337,7 @@ function updateCalendarControls() {
   const calendar = $('input[name="calendarType"]:checked')?.value || "solar";
   $("#leapMonthRow").hidden = calendar !== "lunar";
   if (calendar !== "lunar") $("#isLeapMonth").checked = false;
+  updateDayOptions();
 }
 
 function collectEvents() {
@@ -311,6 +402,8 @@ function renderReport(record) {
   formView.hidden = true;
   reportView.hidden = false;
   reportActions.hidden = false;
+  stageHeader.classList.remove("form-mode");
+  $("#pageSubtitle").hidden = true;
   $("#pageEyebrow").textContent = "命理综合研判";
   $("#pageTitle").textContent = record.report.title;
   const imageSeed = record.recordId || `${record.input.name}:${record.input.solarDate}:${record.report.generatedAt}`;
@@ -559,7 +652,7 @@ async function submitReport(event) {
   const button = $("#generateButton");
   const label = $(".button-label", button);
   button.disabled = true;
-  label.textContent = "正在排盘…";
+  label.textContent = "命盘推演中…";
   try {
     const record = await api("/api/reports", {
       method: "POST",
@@ -573,7 +666,7 @@ async function submitReport(event) {
     showToast(error.message, "error");
   } finally {
     button.disabled = false;
-    label.textContent = "生成报告";
+    label.textContent = "开启研判";
   }
 }
 
@@ -608,6 +701,11 @@ $("#deleteButton").addEventListener("click", deleteCurrentRecord);
 form.addEventListener("submit", submitReport);
 
 $$('input[name="calendarType"]').forEach((input) => input.addEventListener("change", updateCalendarControls));
+$$('input[name="timeMode"]').forEach((input) => input.addEventListener("change", updateTimeControls));
+$("#exactTime").addEventListener("input", updateTimeControls);
+$("#timeBranch").addEventListener("change", updateTimeControls);
+$("#year").addEventListener("change", updateDayOptions);
+$("#month").addEventListener("change", updateDayOptions);
 
 $("#historySearch").addEventListener("input", (event) => {
   window.clearTimeout(state.searchTimer);
@@ -620,6 +718,8 @@ $("#historyToggle").addEventListener("click", () => {
 });
 $("#sidebarScrim").addEventListener("click", closeSidebar);
 
+populateDateSelects();
 updateCalendarControls();
+updateTimeControls();
 updateEventsEmpty();
 loadHistory();
