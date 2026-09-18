@@ -616,7 +616,7 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
                 f"容易承受的压力：{profile['risk']}。",
                 f"让自己重新稳下来的方法：{profile['restore']}。",
             ],
-            "note": f"当前资料等级为 {quality['level']}，形成{quality['maxReportLevel']}。{hour_boundary}",
+            "note": f"形成{quality['maxReportLevel']}。{hour_boundary}",
         },
         {
             "id": "structure",
@@ -779,7 +779,7 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
         "relationships": f"关系部分参考日主表达方式与合冲线索：{relation_text}。",
         "turning-points": f"转折类型由十神主题、合冲结构与 {quality['eventCount']} 项已知事件共同限定，不越级指定年份。",
         "wellbeing": f"身心观察以{climate_text}的寒暖燥湿和{strongest}较显的生活偏性为线索。",
-        "review": f"资料等级 {quality['level']}；当前有 {len(quality['reasonCodes'])} 项证据边界需要保留。",
+        "review": f"当前有 {len(quality['reasonCodes'])} 项证据边界需要保留。",
         "actions": "行动建议遵循低风险、可执行、可复盘原则，覆盖事业、财务、关系、健康与环境。",
     }
     deep_insights = {

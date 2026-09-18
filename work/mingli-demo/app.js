@@ -78,7 +78,9 @@ function reportDisplayText(value) {
     .replaceAll("校准四柱报告", "四柱精研报告")
     .replaceAll("暂定四柱报告", "四柱综合报告")
     .replaceAll("三柱情境报告", "三柱综合报告")
-    .replaceAll("基础三柱报告", "基础研判报告");
+    .replaceAll("基础三柱报告", "基础研判报告")
+    .replace(/当前资料等级为 L[1-4][，,]?/g, "")
+    .replace(/资料等级 L[1-4][；;,]?/g, "");
 }
 
 function closeSidebar() {
@@ -112,7 +114,6 @@ function renderHistory() {
 
     const head = node("div", "history-item-head");
     head.append(node("strong", "", record.name));
-    head.append(node("span", "quality-mini", record.qualityLevel));
 
     const meta = node("div", "history-item-meta");
     meta.append(node("span", "", formatBirthDate(record.birthDateText)));
@@ -325,10 +326,7 @@ function renderReport(record) {
   }
   const heroInner = node("div", "report-hero-inner");
   const status = node("div", "report-status-row");
-  status.append(
-    node("span", "quality-badge", record.quality.level),
-    node("span", "", `${reportDisplayText(record.quality.maxReportLevel) || "命理综合报告"} · ${formatDateTime(record.report.generatedAt)}`)
-  );
+  status.append(node("span", "", `${reportDisplayText(record.quality.maxReportLevel) || "命理综合报告"} · ${formatDateTime(record.report.generatedAt)}`));
   heroInner.append(status, node("h2", "", record.report.title));
   heroInner.append(node("p", "", "这不是给人生下定义，而是借一张传统命盘，陪你重新看看自己的性情、关系与选择。"));
   appendPillars(heroInner, record.chart.pillars || []);
@@ -524,7 +522,7 @@ function renderReport(record) {
     }
     if (section.technical) {
       const technical = node("p", "technical-cue");
-      technical.append(node("strong", "", "专业线索"), document.createTextNode(section.technical));
+      technical.append(node("strong", "", "专业线索"), document.createTextNode(reportDisplayText(section.technical)));
       sectionNode.append(technical);
     }
     if (section.scenes?.length) {
