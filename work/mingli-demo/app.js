@@ -238,10 +238,12 @@ function renderHistory() {
     return;
   }
   state.history.forEach((record) => {
-    const button = node("button", "history-item");
-    button.type = "button";
-    button.dataset.recordId = record.recordId;
-    button.classList.toggle("active", state.currentRecord?.recordId === record.recordId);
+    const item = node("div", "history-item");
+    item.dataset.recordId = record.recordId;
+    item.classList.toggle("active", state.currentRecord?.recordId === record.recordId);
+
+    const openButton = node("button", "history-item-open");
+    openButton.type = "button";
 
     const head = node("div", "history-item-head");
     head.append(node("strong", "", record.name));
@@ -249,9 +251,16 @@ function renderHistory() {
     const meta = node("div", "history-item-meta");
     meta.append(node("span", "", formatBirthDate(record.birthDateText)));
     meta.append(node("span", "", formatDateTime(record.createdAt)));
-    button.append(head, meta);
-    button.addEventListener("click", () => openRecord(record.recordId));
-    historyList.append(button);
+    openButton.append(head, meta);
+    openButton.addEventListener("click", () => openRecord(record.recordId));
+
+    const deleteButton = node("button", "history-item-delete", "×");
+    deleteButton.type = "button";
+    deleteButton.setAttribute("aria-label", `删除${record.name}的查询记录`);
+    deleteButton.title = "删除这条记录";
+    deleteButton.addEventListener("click", () => deleteHistoryRecord(record));
+    item.append(openButton, deleteButton);
+    historyList.append(item);
   });
 }
 
@@ -780,13 +789,11 @@ async function submitReport(event) {
   }
 }
 
-async function deleteCurrentRecord() {
-  if (!state.currentRecord) return;
-  const { recordId, input } = state.currentRecord;
-  if (!window.confirm(`确认删除“${input.name}”的这份查询记录？`)) return;
+async function deleteHistoryRecord(record) {
+  if (!window.confirm(`确认删除“${record.name}”的这份查询记录？`)) return;
   try {
-    await api(`/api/reports/${encodeURIComponent(recordId)}`, { method: "DELETE" });
-    showForm();
+    await api(`/api/reports/${encodeURIComponent(record.recordId)}`, { method: "DELETE" });
+    if (state.currentRecord?.recordId === record.recordId) showForm();
     await loadHistory($("#historySearch").value.trim());
     showToast("记录已删除");
   } catch (error) {
@@ -806,7 +813,6 @@ $("#editReportButton").addEventListener("click", () => {
 });
 
 $("#addEventButton").addEventListener("click", () => addEventRow());
-$("#deleteButton").addEventListener("click", deleteCurrentRecord);
 form.addEventListener("submit", submitReport);
 
 $$('input[name="calendarType"]').forEach((input) => input.addEventListener("change", updateCalendarControls));

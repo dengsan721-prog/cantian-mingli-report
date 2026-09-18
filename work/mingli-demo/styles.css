@@ -167,9 +167,9 @@ a:focus-visible {
   min-width: 0;
   color: #34455f;
   font-family: var(--report-display);
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
   white-space: nowrap;
 }
 
@@ -284,15 +284,17 @@ a:focus-visible {
 }
 
 .history-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30px;
+  align-items: stretch;
   width: 100%;
   min-height: 67px;
   margin: 0;
-  padding: 10px;
   border: 1px solid transparent;
   border-radius: 7px;
-  text-align: left;
   background: rgba(255, 255, 252, 0.46);
-  cursor: pointer;
+  overflow: hidden;
 }
 
 .history-item:hover {
@@ -301,11 +303,40 @@ a:focus-visible {
 }
 
 .history-item.active {
-  position: relative;
   color: #334b67;
   border-color: rgba(185, 149, 77, 0.58);
   background: rgba(255, 253, 247, 0.82);
   box-shadow: 0 9px 22px rgba(58, 79, 107, 0.12), inset 0 0 0 3px rgba(255, 253, 246, 0.72);
+}
+
+.history-item-open {
+  min-width: 0;
+  padding: 10px 5px 10px 10px;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.history-item-delete {
+  align-self: center;
+  width: 28px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid rgba(133, 114, 77, 0.18);
+  color: #7d7165;
+  background: transparent;
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.history-item-delete:hover,
+.history-item-delete:focus-visible {
+  color: #7d302e;
+  background: rgba(148, 59, 55, 0.08);
 }
 
 .history-item-head,
