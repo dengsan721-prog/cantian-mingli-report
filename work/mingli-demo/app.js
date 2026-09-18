@@ -318,6 +318,21 @@ function renderReport(record) {
   index.replaceChildren();
   content.replaceChildren();
 
+  if (record.report.highlights?.length) {
+    const highlights = node("section", "report-highlights");
+    const heading = node("div", "highlights-heading");
+    heading.append(node("span", "", "先看这四点"), node("small", "", "整份报告的核心提要"));
+    highlights.append(heading);
+    const grid = node("div", "highlights-grid");
+    record.report.highlights.forEach((highlight, index) => {
+      const item = node("div", `highlight-item tone-${index + 1}`);
+      item.append(node("span", "", highlight.label), node("strong", "", highlight.value));
+      grid.append(item);
+    });
+    highlights.append(grid);
+    content.append(highlights);
+  }
+
   if (record.quality.reasonText?.length) {
     const notice = node("div", "quality-notice");
     notice.append(node("strong", "", "有几处信息还可以慢慢补全"));
@@ -339,6 +354,42 @@ function renderReport(record) {
     content.append(block);
   }
 
+  if (record.report.foundation) {
+    const foundation = record.report.foundation;
+    const details = node("details", "foundation-panel");
+    const summary = node("summary");
+    const summaryCopy = node("span");
+    summaryCopy.append(node("strong", "", "本次研判底稿"));
+    summaryCopy.append(node("small", "", `${foundation.knowledgeRuleCount} 条规则 · ${foundation.theorySourceCount} 类理论来源 · ${foundation.appliedRules.length} 条本次采用`));
+    summary.append(summaryCopy, node("em", "", "查看依据"));
+    details.append(summary);
+    const body = node("div", "foundation-body");
+    const stats = node("div", "foundation-stats");
+    [
+      ["公开人物", foundation.stats.publicPeople],
+      ["事件资料", foundation.stats.publicEvents],
+      ["排盘快照", foundation.stats.chartSnapshots],
+      ["纠偏记录", foundation.stats.correctionRecords],
+    ].forEach(([label, value]) => {
+      const item = node("div");
+      item.append(node("strong", "", Number(value).toLocaleString("zh-CN")), node("span", "", label));
+      stats.append(item);
+    });
+    body.append(stats);
+    if (foundation.appliedRules.length) {
+      const rules = node("div", "foundation-rules");
+      foundation.appliedRules.forEach((rule) => {
+        const item = node("p");
+        item.append(node("strong", "", rule.topic), document.createTextNode(rule.summary));
+        rules.append(item);
+      });
+      body.append(rules);
+    }
+    body.append(node("p", "foundation-note", foundation.note));
+    details.append(body);
+    content.append(details);
+  }
+
   record.report.sections.forEach((section, sectionIndex) => {
     const anchor = node("a", "", section.title);
     anchor.href = `#report-${section.id}`;
@@ -349,10 +400,20 @@ function renderReport(record) {
     sectionNode.append(node("span", "report-section-number", String(sectionIndex + 1).padStart(2, "0")));
     sectionNode.append(node("h3", "", section.title));
     sectionNode.append(node("p", "report-summary", section.summary));
+    if (section.technical) {
+      const technical = node("p", "technical-cue");
+      technical.append(node("strong", "", "专业线索"), document.createTextNode(section.technical));
+      sectionNode.append(technical);
+    }
     if (section.scenes?.length) {
       const story = node("div", "report-story");
       section.scenes.forEach((paragraph) => story.append(node("p", "", paragraph)));
       sectionNode.append(story);
+    }
+    if (section.insight) {
+      const insight = node("aside", "deep-insight");
+      insight.append(node("span", "", "深层洞见"), node("p", "", section.insight));
+      sectionNode.append(insight);
     }
     if (section.items?.length) {
       if (section.listTitle) sectionNode.append(node("p", "report-list-title", section.listTitle));

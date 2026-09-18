@@ -60,6 +60,10 @@ class ReportEngineTests(unittest.TestCase):
         self.assertEqual(len(generated["report"]["sections"]), 10)
         self.assertTrue(all(section.get("scenes") for section in generated["report"]["sections"]))
         self.assertTrue(all(section.get("note") for section in generated["report"]["sections"]))
+        self.assertTrue(all(section.get("technical") for section in generated["report"]["sections"]))
+        self.assertTrue(all(section.get("insight") for section in generated["report"]["sections"]))
+        self.assertEqual(len(generated["report"]["highlights"]), 4)
+        self.assertGreater(generated["report"]["foundation"]["stats"]["chartSnapshots"], 1000)
 
     def test_unknown_time_never_selects_a_branch(self) -> None:
         payload = exact_payload()

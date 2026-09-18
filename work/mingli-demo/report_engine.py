@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import re
+import sqlite3
 import sys
 from collections import Counter
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +14,8 @@ from lunar_python import Lunar
 
 
 ROOT = Path(__file__).resolve().parent
-SYSTEM_SCRIPTS = ROOT.parent / "mingli-system" / "scripts"
+SYSTEM_ROOT = ROOT.parent / "mingli-system"
+SYSTEM_SCRIPTS = SYSTEM_ROOT / "scripts"
 if str(SYSTEM_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SYSTEM_SCRIPTS))
 
@@ -111,6 +114,52 @@ REASON_TEXT = {
     "FEWER_THAN_FIVE_EVENTS": "可核验人生事件少于五项，不足以进行稳健校时。",
     "FEWER_THAN_THREE_EVENT_TYPES": "人生事件类型少于三类，容易产生单一领域偏差。",
 }
+
+
+@lru_cache(maxsize=1)
+def load_knowledge_foundation() -> dict[str, Any]:
+    knowledge_path = SYSTEM_ROOT / "knowledge_base.json"
+    database_path = SYSTEM_ROOT / "data" / "mingli_validation.db"
+    knowledge: dict[str, Any] = {}
+    if knowledge_path.exists():
+        knowledge = json.loads(knowledge_path.read_text(encoding="utf-8"))
+    rules = {
+        item["rule_id"]: {
+            "ruleId": item["rule_id"],
+            "topic": item["topic"],
+            "summary": item["rule_summary"],
+        }
+        for item in knowledge.get("knowledge_rules", [])
+    }
+    stats = {
+        "publicPeople": 0,
+        "publicEvents": 0,
+        "chartSnapshots": 0,
+        "caseStudies": 0,
+        "correctionRecords": 0,
+    }
+    table_map = {
+        "publicPeople": "public_persons",
+        "publicEvents": "life_events_public",
+        "chartSnapshots": "chart_snapshots",
+        "caseStudies": "case_studies",
+        "correctionRecords": "correction_records",
+    }
+    if database_path.exists():
+        conn = sqlite3.connect(database_path)
+        try:
+            for key, table in table_map.items():
+                stats[key] = int(conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+        finally:
+            conn.close()
+    return {
+        "databaseName": knowledge.get("database_name", "命理知识与案例数据库"),
+        "version": knowledge.get("version", "unknown"),
+        "theorySourceCount": len(knowledge.get("theory_sources", [])),
+        "knowledgeRuleCount": len(rules),
+        "rules": rules,
+        "stats": stats,
+    }
 
 
 def _system_imports() -> tuple[Any, Any, Any]:
@@ -320,6 +369,7 @@ def rectification_candidates(data: dict[str, Any], quality: dict[str, Any]) -> d
 
 def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
     data = normalize_input(payload)
+    foundation = load_knowledge_foundation()
     calculate_chart, _, _ = _system_imports()
     chart = calculate_chart(data["solarDate"], data["timeText"], data["timePrecision"])
     if chart is None:
@@ -545,6 +595,69 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
             "note": "这些建议是低风险、可执行的生活方案，不是保证结果的开运承诺。",
         },
     ]
+
+    technical_cues = {
+        "portrait": f"四柱为{'、'.join(pillars)}；日主{chart['day_master']}，月令{chart['month_command']}，季节标记为{climate_text}。",
+        "structure": f"表层五行以{strongest}较显、{weakest}相对较少；十神可见{'、'.join(ten_gods) if ten_gods else '三柱基础信息'}。",
+        "character": f"以{day_element}日主为性情轴，结合{strongest}的显性作用观察稳定状态与压力状态的切换。",
+        "career": f"事业判断取{profile['strength']}为能力主线，同时观察{theme_text}怎样落进职责、资源和协作。",
+        "wealth": f"财富部分从财星线索、资源承接方式与{dominant_profile['risk']}的行为风险共同研判。",
+        "relationships": f"关系部分参考日主表达方式与合冲线索：{relation_text}。",
+        "turning-points": f"转折类型由十神主题、合冲结构与 {quality['eventCount']} 项已知事件共同限定，不越级指定年份。",
+        "wellbeing": f"身心观察以{climate_text}的寒暖燥湿和{strongest}较显的生活偏性为线索。",
+        "review": f"资料等级 {quality['level']}；当前有 {len(quality['reasonCodes'])} 项证据边界需要保留。",
+        "actions": "行动建议遵循低风险、可执行、可复盘原则，覆盖事业、财务、关系、健康与环境。",
+    }
+    deep_insights = {
+        "portrait": f"真正贯穿{data['name']}人生的，不是必须证明自己多能扛，而是学会选择什么值得扛、什么应该放下。",
+        "structure": f"{strongest}带来的优势已经足够明显，下一阶段的成长不在于继续加强同一种能力，而在于让{weakest}所代表的节奏通过制度、伙伴和环境进入生活。",
+        "character": "很多时候，所谓性格问题并不是脾气，而是一个人长期用最擅长的方式保护自己。看见保护背后的担心，改变才不会变成自我否定。",
+        "career": "事业真正的分水岭，通常不是又接下一个任务，而是能否把个人经验变成别人也能使用的方法。那一刻，辛苦才开始沉淀为位置。",
+        "wealth": "钱最深的作用不是证明成功，而是让人在家庭责任、个人选择和未来不确定之间保留余地。边界清楚，财富才会变成安全感。",
+        "relationships": "关系里的难题常常不是不爱，而是一个人在用行动表达，另一个人在等待情绪回应。把爱翻译成对方听得懂的语言，比争论谁付出更多重要。",
+        "turning-points": "人生转弯前往往先出现一种旧办法已经不够用的感觉。别急着把不适当成坏运，它也可能是在提醒：新的身份需要新的边界和能力。",
+        "wellbeing": "身体不是拖累目标的部分，而是所有目标能够持续的前提。真正有效的自律，也包括在消耗越界之前停下来。",
+        "review": "一份诚实的报告会承认自己不知道什么。保留空白不是不专业，而是让未来发生的真实生活仍有权修正今天的判断。",
+        "actions": "所谓转运，很多时候不是等待外界突然改变，而是在同样的处境里，开始做出更符合自己长期利益的选择。",
+    }
+    evidence_map = {
+        "portrait": ["KR_001_MONTH_COMMAND_FIRST"],
+        "structure": ["KR_001_MONTH_COMMAND_FIRST"],
+        "character": ["KR_001_MONTH_COMMAND_FIRST"],
+        "career": ["KR_005_CASE_VERIFICATION"],
+        "wealth": ["KR_007_FINANCE_SAFETY"],
+        "relationships": ["KR_005_CASE_VERIFICATION"],
+        "turning-points": ["KR_003_TRUE_SOLAR_BOUNDARY", "KR_005_CASE_VERIFICATION"],
+        "wellbeing": ["KR_006_HEALTH_SAFETY"],
+        "review": ["KR_002_NO_HOUR_NO_FULL_DETAIL", "KR_004_LUNAR_LEAP_MONTH"],
+        "actions": ["KR_008_ACTIONABLE_OUTPUT"],
+    }
+    for section in sections:
+        section["technical"] = technical_cues[section["id"]]
+        section["insight"] = deep_insights[section["id"]]
+        section_evidence = list(evidence_map[section["id"]])
+        if data["timePrecision"] != "unknown" and "KR_002_NO_HOUR_NO_FULL_DETAIL" in section_evidence:
+            section_evidence.remove("KR_002_NO_HOUR_NO_FULL_DETAIL")
+        if data["calendarType"] != "lunar" and "KR_004_LUNAR_LEAP_MONTH" in section_evidence:
+            section_evidence.remove("KR_004_LUNAR_LEAP_MONTH")
+        section["evidenceIds"] = section_evidence
+
+    applied_rule_ids = {rule_id for section in sections for rule_id in section["evidenceIds"]}
+    if data["timePrecision"] != "unknown":
+        applied_rule_ids.discard("KR_002_NO_HOUR_NO_FULL_DETAIL")
+    if data["calendarType"] != "lunar":
+        applied_rule_ids.discard("KR_004_LUNAR_LEAP_MONTH")
+    applied_rules = [
+        foundation["rules"][rule_id]
+        for rule_id in sorted(applied_rule_ids)
+        if rule_id in foundation["rules"]
+    ]
+    highlights = [
+        {"label": "命盘主调", "value": f"{chart['day_master']}日主，{strongest}的力量较显"},
+        {"label": "成事方式", "value": profile["strength"]},
+        {"label": "关系课题", "value": "先让感受被听见，再一起解决问题"},
+        {"label": "当前提醒", "value": profile["practice"]},
+    ]
     return {
         "input": data,
         "chart": {**chart, "pillars": pillars, "elements": elements, "trueSolarVariant": solar_variant},
@@ -553,7 +666,17 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
         "report": {
             "title": f"{data['name']}命理综合研判报告",
             "generatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "highlights": highlights,
             "sections": sections,
+            "foundation": {
+                "databaseName": foundation["databaseName"],
+                "version": foundation["version"],
+                "theorySourceCount": foundation["theorySourceCount"],
+                "knowledgeRuleCount": foundation["knowledgeRuleCount"],
+                "appliedRules": applied_rules,
+                "stats": foundation["stats"],
+                "note": "样本规模用于扩大覆盖、发现偏差与保存校验线索，不代表命理预测已经获得科学准确率证明。",
+            },
             "disclosure": "这份报告以传统命理结构作人生观察与情境预测。它可以提供另一种理解自己的语言，但不会替你决定人生；所有预测都应等待现实验证，也不能替代医疗、法律、投资等专业意见。",
         },
     }
