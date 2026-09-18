@@ -173,8 +173,8 @@ function showForm({ keepValues = false } = {}) {
   formView.hidden = false;
   reportView.hidden = true;
   reportActions.hidden = true;
-  $("#pageEyebrow").textContent = keepValues ? "编辑资料" : "新建研判";
-  $("#pageTitle").textContent = "录入出生信息";
+  $("#pageEyebrow").textContent = keepValues ? "回来补充资料" : "新建报告";
+  $("#pageTitle").textContent = keepValues ? "再核对一下出生信息" : "把出生信息告诉我们";
   renderHistory();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -204,7 +204,7 @@ function addEventRow(eventData = {}) {
   const summaryLabel = node("label", "field event-summary");
   summaryLabel.append(node("span", "", "事件说明"));
   const summaryInput = node("input", "event-summary-input");
-  summaryInput.placeholder = "只写可核验的事实";
+  summaryInput.placeholder = "例如结婚、换工作、搬到西安";
   summaryInput.maxLength = 180;
   summaryInput.value = eventData.summary || "";
   summaryLabel.append(summaryInput);
@@ -308,7 +308,7 @@ function renderReport(record) {
     node("span", "", `${record.quality.maxReportLevel} · ${formatDateTime(record.report.generatedAt)}`)
   );
   heroInner.append(status, node("h2", "", record.report.title));
-  heroInner.append(node("p", "", "依据已核验资料生成；资料缺口与结论边界在报告中单独标注。"));
+  heroInner.append(node("p", "", "这不是给人生下定义，而是借一张传统命盘，陪你重新看看自己的性情、关系与选择。"));
   appendPillars(heroInner, record.chart.pillars || []);
   appendReportFacts(heroInner, record);
   hero.append(heroInner);
@@ -320,8 +320,8 @@ function renderReport(record) {
 
   if (record.quality.reasonText?.length) {
     const notice = node("div", "quality-notice");
-    notice.append(node("strong", "", "资料质量提示"));
-    notice.append(node("span", "", record.quality.reasonText.join(" ")));
+    notice.append(node("strong", "", "有几处信息还可以慢慢补全"));
+    notice.append(node("span", "", `${record.quality.reasonText.join(" ")} 这不妨碍阅读整份报告，只会让相应细节保留一些弹性。`));
     content.append(notice);
   }
 
@@ -349,9 +349,22 @@ function renderReport(record) {
     sectionNode.append(node("span", "report-section-number", String(sectionIndex + 1).padStart(2, "0")));
     sectionNode.append(node("h3", "", section.title));
     sectionNode.append(node("p", "report-summary", section.summary));
-    const list = node("ul");
-    section.items.forEach((item) => list.append(node("li", "", item)));
-    sectionNode.append(list);
+    if (section.scenes?.length) {
+      const story = node("div", "report-story");
+      section.scenes.forEach((paragraph) => story.append(node("p", "", paragraph)));
+      sectionNode.append(story);
+    }
+    if (section.items?.length) {
+      if (section.listTitle) sectionNode.append(node("p", "report-list-title", section.listTitle));
+      const list = node("ul");
+      section.items.forEach((item) => list.append(node("li", "", item)));
+      sectionNode.append(list);
+    }
+    if (section.note) {
+      const note = node("p", "section-note");
+      note.append(node("strong", "", "简要注释："), document.createTextNode(section.note));
+      sectionNode.append(note);
+    }
     content.append(sectionNode);
   });
 
@@ -379,7 +392,7 @@ async function submitReport(event) {
     showToast(error.message, "error");
   } finally {
     button.disabled = false;
-    label.textContent = "生成命理报告";
+    label.textContent = "看看我的命理报告";
   }
 }
 

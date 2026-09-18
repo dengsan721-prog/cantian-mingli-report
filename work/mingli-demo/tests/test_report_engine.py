@@ -57,6 +57,9 @@ class ReportEngineTests(unittest.TestCase):
         self.assertEqual(len(generated["chart"]["pillars"]), 4)
         self.assertTrue(generated["chart"]["trueSolarVariant"]["changesHourPillar"])
         self.assertIn("FEWER_THAN_FIVE_EVENTS", generated["quality"]["reasonCodes"])
+        self.assertEqual(len(generated["report"]["sections"]), 10)
+        self.assertTrue(all(section.get("scenes") for section in generated["report"]["sections"]))
+        self.assertTrue(all(section.get("note") for section in generated["report"]["sections"]))
 
     def test_unknown_time_never_selects_a_branch(self) -> None:
         payload = exact_payload()
