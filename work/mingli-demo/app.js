@@ -153,6 +153,7 @@ function fillForm(input) {
   $("#calendarVerified").checked = Boolean(input.calendarVerified);
   $("#timeStandardVerified").checked = Boolean(input.timeStandardVerified);
   eventsList.replaceChildren();
+  $("#eventPanel").open = false;
   (input.events || []).forEach(addEventRow);
   updateEventsEmpty();
   updateCalendarControls();
@@ -166,6 +167,8 @@ function showForm({ keepValues = false } = {}) {
     form.reset();
     setField("timezone", "Asia/Shanghai");
     eventsList.replaceChildren();
+    $("#eventPanel").open = false;
+    $("#precisionPanel").open = false;
     state.currentRecord = null;
   }
   updateEventsEmpty();
@@ -173,13 +176,14 @@ function showForm({ keepValues = false } = {}) {
   formView.hidden = false;
   reportView.hidden = true;
   reportActions.hidden = true;
-  $("#pageEyebrow").textContent = keepValues ? "回来补充资料" : "新建报告";
-  $("#pageTitle").textContent = keepValues ? "再核对一下出生信息" : "把出生信息告诉我们";
+  $("#pageEyebrow").textContent = "命理研判";
+  $("#pageTitle").textContent = keepValues ? "核对出生资料" : "建立命盘";
   renderHistory();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function addEventRow(eventData = {}) {
+  $("#eventPanel").open = true;
   const row = node("div", "event-row");
 
   const dateLabel = node("label", "field");
@@ -225,7 +229,9 @@ function addEventRow(eventData = {}) {
 }
 
 function updateEventsEmpty() {
-  eventsEmpty.hidden = eventsList.children.length > 0;
+  const count = eventsList.children.length;
+  eventsEmpty.hidden = count > 0;
+  $("#eventCount").textContent = `${count} 条`;
 }
 
 function updateCalendarControls() {
@@ -453,7 +459,7 @@ async function submitReport(event) {
     showToast(error.message, "error");
   } finally {
     button.disabled = false;
-    label.textContent = "看看我的命理报告";
+    label.textContent = "生成报告";
   }
 }
 

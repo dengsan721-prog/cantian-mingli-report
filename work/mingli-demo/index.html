@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f5f5f7" />
     <title>参天 · 命理综合研判</title>
-    <link rel="stylesheet" href="./styles.css?v=20260918-3" />
+    <link rel="stylesheet" href="./styles.css?v=20260918-4" />
   </head>
   <body>
     <div class="app-shell">
@@ -40,8 +40,8 @@
         <header class="stage-header">
           <button class="icon-button mobile-only" id="historyToggle" type="button" aria-label="打开查询记录" title="查询记录">☰</button>
           <div>
-            <p class="eyebrow" id="pageEyebrow">新建报告</p>
-            <h1 id="pageTitle">把出生信息告诉我们</h1>
+            <p class="eyebrow" id="pageEyebrow">命理研判</p>
+            <h1 id="pageTitle">建立命盘</h1>
           </div>
           <div class="header-actions" id="reportActions" hidden>
             <button class="secondary-button" id="editReportButton" type="button">修改资料</button>
@@ -56,8 +56,8 @@
               <div class="form-overview-copy">
                 <span class="overview-mark" aria-hidden="true">命</span>
                 <div>
-                  <strong>从一份真实的出生资料开始</strong>
-                  <p>知道多少就填写多少，不确定的地方留一点余地，报告反而会更诚实。</p>
+                  <strong>信息越准，研判越稳</strong>
+                  <p>按真实记录填写，不确定可留空。</p>
                 </div>
               </div>
               <div class="form-progress" aria-label="填写步骤">
@@ -71,11 +71,11 @@
                 <span>01</span>
                 <div>
                   <h2 id="identityHeading">出生资料</h2>
-                  <p>尽量按家里记得的真实情况填写，不确定的地方也可以如实写“不详”</p>
+                  <p>按真实记录填写，不确定可留空</p>
                 </div>
               </div>
 
-              <div class="fields-grid two-columns">
+              <div class="identity-grid">
                 <label class="field full-mobile">
                   <span>姓名 <b>*</b></span>
                   <input id="name" name="name" required maxlength="40" autocomplete="name" placeholder="请输入姓名" />
@@ -89,9 +89,6 @@
                     <label><input type="radio" name="gender" value="unknown" /><span>未知</span></label>
                   </div>
                 </fieldset>
-              </div>
-
-              <div class="birth-date-grid">
                 <fieldset class="field calendar-field">
                   <legend>历法</legend>
                   <div class="segmented-control compact">
@@ -99,17 +96,24 @@
                     <label><input type="radio" name="calendarType" value="lunar" /><span>农历</span></label>
                   </div>
                 </fieldset>
-                <label class="field">
-                  <span>年 <b>*</b></span>
+              </div>
+
+              <div class="birth-date-label">出生日期 <b>*</b></div>
+              <div class="birth-date-grid">
+                <label class="field date-part">
+                  <span class="sr-only">出生年份</span>
                   <input id="year" name="year" type="number" required min="1000" max="2100" inputmode="numeric" placeholder="1989" />
+                  <span class="date-suffix" aria-hidden="true">年</span>
                 </label>
-                <label class="field">
-                  <span>月 <b>*</b></span>
+                <label class="field date-part">
+                  <span class="sr-only">出生月份</span>
                   <input id="month" name="month" type="number" required min="1" max="12" inputmode="numeric" placeholder="3" />
+                  <span class="date-suffix" aria-hidden="true">月</span>
                 </label>
-                <label class="field">
-                  <span>日 <b>*</b></span>
+                <label class="field date-part">
+                  <span class="sr-only">出生日期</span>
                   <input id="day" name="day" type="number" required min="1" max="31" inputmode="numeric" placeholder="1" />
+                  <span class="date-suffix" aria-hidden="true">日</span>
                 </label>
                 <label class="switch-row" id="leapMonthRow" hidden>
                   <input id="isLeapMonth" name="isLeapMonth" type="checkbox" />
@@ -121,8 +125,7 @@
               <div class="fields-grid birth-place-grid">
                 <label class="field">
                   <span>出生时刻</span>
-                  <input id="timeText" name="timeText" placeholder="例如 05:25、亥时或不详" autocomplete="off" />
-                  <small>知道分钟请写 24 小时制，只记得时辰也可以</small>
+                  <input id="timeText" name="timeText" placeholder="05:25、亥时或不详" autocomplete="off" />
                 </label>
                 <label class="field full-mobile">
                   <span>出生地点 <b>*</b></span>
@@ -132,8 +135,8 @@
 
               <details class="precision-panel" id="precisionPanel">
                 <summary>
-                  <span>想让结果更贴近本人，可以补充精度信息</span>
-                  <small>经纬度、时区与资料来源</small>
+                  <span>精度设置 <b>选填</b></span>
+                  <small>经纬度、时区、资料核验</small>
                 </summary>
                 <div class="precision-content">
                   <div class="fields-grid three-columns">
@@ -164,24 +167,29 @@
               </details>
             </section>
 
-            <section class="form-section event-section" aria-labelledby="eventHeading">
-              <div class="section-heading with-action">
-                <span>02</span>
-                <div>
-                  <h2 id="eventHeading">人生经历 <em>选填</em></h2>
-                  <p>写下某年某月发生过的转折，帮助系统核对时辰，让报告更像你真实走过的人生</p>
+            <section class="form-section event-section">
+              <details class="event-panel" id="eventPanel">
+                <summary>
+                  <span class="section-number">02</span>
+                  <span class="event-summary-copy">
+                    <strong id="eventHeading">关键经历 <em>选填</em></strong>
+                    <small>用于校时与复核判断</small>
+                  </span>
+                  <span class="event-count" id="eventCount">0 条</span>
+                </summary>
+                <div class="event-panel-content">
+                  <aside class="event-explainer">
+                    <strong>填写某年某月发生的事实</strong>
+                    <span>例如参加工作、结婚、搬家、生病或家庭变故，不需要解释原因。</span>
+                  </aside>
+                  <button class="secondary-button small" id="addEventButton" type="button">＋ 添加经历</button>
+                  <div class="events-list" id="eventsList"></div>
+                  <div class="events-empty" id="eventsEmpty">
+                    <p>暂未添加</p>
+                    <span>不影响生成初版报告。</span>
+                  </div>
                 </div>
-                <button class="secondary-button small" id="addEventButton" type="button">＋ 记录一段经历</button>
-              </div>
-              <aside class="event-explainer">
-                <strong>可以写什么？</strong>
-                <span>例如：2012 年 7 月参加工作、2018 年 10 月结婚、2021 年搬家、某年生病或家里发生大事。只写你能确认的事实，不需要解释原因。</span>
-              </aside>
-              <div class="events-list" id="eventsList"></div>
-              <div class="events-empty" id="eventsEmpty">
-                <p>这部分可以先不填</p>
-                <span>不影响生成初版报告；以后想核对出生时辰时，再补充至少 5 件、覆盖 3 类的真实经历。</span>
-              </div>
+              </details>
             </section>
 
             <div class="submit-bar">
@@ -190,7 +198,7 @@
                 <span>生成后可在查询记录中随时回来看看</span>
               </div>
               <button class="primary-button" id="generateButton" type="submit">
-                <span class="button-label">看看我的命理报告</span>
+                <span class="button-label">生成报告</span>
                 <span aria-hidden="true">→</span>
               </button>
             </div>
@@ -209,6 +217,6 @@
 
     <div class="sidebar-scrim" id="sidebarScrim" hidden></div>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-    <script src="./app.js?v=20260918-3"></script>
+    <script src="./app.js?v=20260918-4"></script>
   </body>
 </html>

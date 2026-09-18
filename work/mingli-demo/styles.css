@@ -749,16 +749,56 @@ a:focus-visible {
   margin-top: 0;
 }
 
-.birth-date-grid {
+.identity-grid {
   display: grid;
-  grid-template-columns: minmax(210px, 1.1fr) minmax(120px, 0.9fr) minmax(92px, 0.55fr) minmax(92px, 0.55fr) minmax(105px, 0.55fr);
+  grid-template-columns: minmax(260px, 1.5fr) minmax(240px, 1fr) minmax(190px, 0.9fr);
   gap: 14px;
   align-items: end;
+}
+
+.identity-grid .segmented-control.compact {
+  width: 100%;
+}
+
+.birth-date-label {
   margin-top: 18px;
+  color: #3a3a3c;
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.birth-date-label b {
+  color: var(--red);
+}
+
+.birth-date-grid {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.4fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr) minmax(100px, 0.8fr);
+  gap: 14px;
+  align-items: end;
+  width: min(620px, 100%);
+  margin-top: 8px;
 }
 
 .birth-date-grid:has(#leapMonthRow[hidden]) {
-  grid-template-columns: minmax(210px, 1.1fr) minmax(120px, 0.9fr) minmax(92px, 0.55fr) minmax(92px, 0.55fr);
+  grid-template-columns: minmax(150px, 1.4fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr);
+}
+
+.date-part {
+  position: relative;
+}
+
+.date-part input {
+  padding-right: 30px;
+}
+
+.date-suffix {
+  position: absolute;
+  right: 12px;
+  bottom: 13px;
+  color: var(--muted);
+  font-size: 12px;
+  pointer-events: none;
 }
 
 .birth-place-grid {
@@ -835,6 +875,13 @@ a:focus-visible {
   font-weight: 600;
 }
 
+.precision-panel summary b {
+  margin-left: 5px;
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 650;
+}
+
 .precision-panel summary small {
   color: var(--muted);
   font-size: 11px;
@@ -873,18 +920,84 @@ a:focus-visible {
 }
 
 .event-section {
+  padding-top: 0;
+  padding-bottom: 0;
   background: #fcfcfd;
 }
 
-.event-section .section-heading {
-  margin-bottom: 16px;
+.event-panel summary {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 82px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.event-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.event-panel .section-number {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 7px;
+  color: var(--blue);
+  background: var(--blue-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.event-summary-copy strong,
+.event-summary-copy small {
+  display: block;
+}
+
+.event-summary-copy strong {
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.event-summary-copy strong em {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--green);
+  background: var(--green-soft);
+  font-size: 9px;
+  font-style: normal;
+  vertical-align: 2px;
+}
+
+.event-summary-copy small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.event-count {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.event-panel-content {
+  padding: 0 0 24px 44px;
+}
+
+.event-panel-content > .secondary-button {
+  margin-bottom: 12px;
 }
 
 .event-explainer {
   display: grid;
   grid-template-columns: 92px minmax(0, 1fr);
   gap: 10px;
-  margin: -4px 0 14px 44px;
+  margin: 0 0 14px;
   padding: 11px 13px;
   border-left: 3px solid #8eb9e7;
   color: #4d5966;
@@ -1607,7 +1720,7 @@ a:focus-visible {
 
   .form-view {
     width: calc(100% - 32px);
-    padding-top: 12px;
+    padding: 12px 0 86px;
   }
 
   .form-view::before {
@@ -1620,18 +1733,23 @@ a:focus-visible {
   }
 
   .form-overview {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 14px;
-    padding: 18px;
+    min-height: 64px;
+    padding: 11px 16px;
   }
 
   .form-progress {
-    width: 100%;
+    display: none;
   }
 
-  .form-progress i {
-    flex: 1;
+  .form-overview-copy p {
+    display: none;
+  }
+
+  .overview-mark {
+    flex-basis: 34px;
+    width: 34px;
+    height: 34px;
+    font-size: 19px;
   }
 
   .section-heading,
@@ -1645,23 +1763,41 @@ a:focus-visible {
     margin-top: 5px;
   }
 
-  .fields-grid.two-columns,
   .fields-grid.three-columns,
-  .birth-date-grid,
-  .birth-date-grid:has(#leapMonthRow[hidden]),
   .birth-place-grid {
     grid-template-columns: 1fr 1fr;
   }
 
-  .full-mobile,
-  .calendar-field,
-  .switch-row {
+  .identity-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .identity-grid > .full-mobile {
+    grid-column: 1 / -1;
+  }
+
+  .birth-date-grid,
+  .birth-date-grid:has(#leapMonthRow[hidden]) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) minmax(0, 0.8fr);
+    gap: 8px;
+    width: 100%;
+  }
+
+  .birth-date-grid .switch-row {
+    grid-column: 1 / -1;
+  }
+
+  .birth-place-grid .full-mobile {
     grid-column: 1 / -1;
   }
 
   .event-explainer {
     grid-template-columns: 1fr;
     margin-left: 0;
+  }
+
+  .event-panel-content {
+    padding-left: 0;
   }
 
   .segmented-control.compact {
@@ -1685,9 +1821,20 @@ a:focus-visible {
   }
 
   .submit-bar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
     align-items: stretch;
     flex-direction: column;
-    padding: 22px 18px 24px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--line-soft);
+    box-shadow: 0 -8px 24px rgba(36, 42, 52, 0.08);
+    z-index: 35;
+  }
+
+  .submit-bar > div {
+    display: none;
   }
 
   .primary-button {
@@ -1695,20 +1842,21 @@ a:focus-visible {
   }
 
   .report-hero {
-    padding: 28px 16px;
+    padding: 22px 16px 24px;
   }
 
   .report-hero h2 {
-    font-size: 25px;
+    font-size: 23px;
   }
 
   .pillar-strip {
     grid-template-columns: repeat(4, 1fr);
     gap: 6px;
+    margin-top: 20px;
   }
 
   .pillar-cell {
-    min-height: 68px;
+    min-height: 62px;
     padding: 8px 6px;
   }
 
@@ -1719,28 +1867,20 @@ a:focus-visible {
   .report-layout {
     display: block;
     width: calc(100% - 32px);
-    padding-top: 30px;
+    padding-top: 24px;
   }
 
   .highlights-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .highlight-item {
-    min-height: 0;
+    min-height: 96px;
+    padding: 11px 12px;
   }
 
   .foundation-stats {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .technical-cue {
-    display: block;
-  }
-
-  .technical-cue strong {
-    display: block;
-    margin-bottom: 3px;
   }
 
   .report-index {
@@ -1771,15 +1911,24 @@ a:focus-visible {
 
   .fields-grid.two-columns,
   .fields-grid.three-columns,
-  .birth-date-grid,
-  .birth-date-grid:has(#leapMonthRow[hidden]),
   .birth-place-grid {
     grid-template-columns: 1fr;
   }
 
-  .calendar-field,
-  .switch-row,
-  .full-mobile {
+  .identity-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .identity-grid > .full-mobile {
+    grid-column: 1 / -1;
+  }
+
+  .birth-date-grid,
+  .birth-date-grid:has(#leapMonthRow[hidden]) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) minmax(0, 0.8fr);
+  }
+
+  .birth-place-grid .full-mobile {
     grid-column: auto;
   }
 
