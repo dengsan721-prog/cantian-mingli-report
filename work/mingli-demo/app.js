@@ -365,25 +365,102 @@ function renderReport(record) {
     const details = node("details", "foundation-panel");
     const summary = node("summary");
     const summaryCopy = node("span");
-    summaryCopy.append(node("strong", "", "本次研判底稿"));
-    summaryCopy.append(node("small", "", `${foundation.knowledgeRuleCount} 条规则 · ${foundation.theorySourceCount} 类理论来源 · ${foundation.appliedRules.length} 条本次采用`));
-    summary.append(summaryCopy, node("em", "", "查看依据"));
+    const coverage = foundation.coverage || {};
+    const validation = foundation.validation || {};
+    const birthRange = coverage.birthStartYear && coverage.birthEndYear
+      ? `${coverage.birthStartYear}—${coverage.birthEndYear} 年`
+      : "年代持续扩充";
+    summaryCopy.append(node("strong", "", "研判模型"));
+    summaryCopy.append(node("small", "", `${Number(foundation.stats.publicPeople).toLocaleString("zh-CN")} 位公开人物 · ${birthRange} · 双向纠偏`));
+    summary.append(summaryCopy, node("em", "", "查看模型"));
     details.append(summary);
     const body = node("div", "foundation-body");
+
+    const intro = node("section", "model-intro");
+    intro.append(node("span", "", "MODEL / 研判框架"));
+    intro.append(node("strong", "", foundation.modelName || "多源命理结构研判模型"));
+    intro.append(node("p", "", "把传统结构规则、公开人物样本与本人真实经历放在同一条证据链中。规则负责提出判断，案例负责寻找偏差，人生事件负责验证这份判断是否真的贴近本人。"));
+    body.append(intro);
+
     const stats = node("div", "foundation-stats");
     [
       ["公开人物", foundation.stats.publicPeople],
       ["事件资料", foundation.stats.publicEvents],
       ["排盘快照", foundation.stats.chartSnapshots],
-      ["纠偏记录", foundation.stats.correctionRecords],
+      ["精确日期", coverage.exactDateRecords || 0],
+      ["校时运行", validation.rectificationRuns || 0],
+      ["留出事件", validation.holdoutEvents || 0],
     ].forEach(([label, value]) => {
       const item = node("div");
       item.append(node("strong", "", Number(value).toLocaleString("zh-CN")), node("span", "", label));
       stats.append(item);
     });
     body.append(stats);
+
+    const coverageBlock = node("section", "model-evidence");
+    coverageBlock.append(node("h4", "", "数据覆盖与边界"));
+    coverageBlock.append(node("p", "", `出生资料覆盖 ${birthRange}，约 ${Number(coverage.birthSpanYears || 0).toLocaleString("zh-CN")} 年；事件记录覆盖 ${coverage.eventStartYear || "待补"}—${coverage.eventEndYear || "待补"} 年，共 ${coverage.eventTypeCount || 0} 类。当前仅 ${Number(coverage.timedBirthRecords || 0).toLocaleString("zh-CN")} 条公开资料带出生时刻，因此无时辰样本不会被用于证明精确时柱。`));
+    const coverageMeta = node("div", "model-meta-row");
+    coverageMeta.append(
+      node("span", "", `${Number(validation.calibrationEvents || 0).toLocaleString("zh-CN")} 条校时事件`),
+      node("span", "", `${Number(validation.holdoutEvents || 0).toLocaleString("zh-CN")} 条留出事件`),
+      node("span", "", `${Number(foundation.stats.correctionRecords || 0).toLocaleString("zh-CN")} 条人工纠偏`),
+      node("span", "", `${Number(validation.metricRecords || 0).toLocaleString("zh-CN")} 项验证指标`),
+      node("span", "", `${foundation.knowledgeRuleCount} 条结构规则`),
+      node("span", "", `${foundation.theorySourceCount} 类理论来源`),
+      node("span", "", "模型阶段：研究验证中")
+    );
+    coverageBlock.append(coverageMeta);
+    body.append(coverageBlock);
+
+    if (foundation.representativePeople?.length) {
+      const peopleBlock = node("section", "model-evidence");
+      peopleBlock.append(node("h4", "", "已收录公开人物举例"));
+      const people = node("div", "people-chips");
+      foundation.representativePeople.forEach((name) => people.append(node("span", "", name)));
+      peopleBlock.append(people);
+      peopleBlock.append(node("small", "", "人物仅用于验证数据管线与结构规则，列入数据库不代表对其人生作价值评价。"));
+      body.append(peopleBlock);
+    }
+
+    if (foundation.similarFigures?.length) {
+      const similarBlock = node("section", "model-evidence");
+      similarBlock.append(node("h4", "", "知名样本的结构距离"));
+      similarBlock.append(node("p", "", "从已收录的知名公开人物中，按日主、月令与三柱结构计算模型内距离；数值越小，只表示结构字段越接近。"));
+      const similarGrid = node("div", "similar-figures");
+      foundation.similarFigures.forEach((figure) => {
+        const item = node("div");
+        const top = node("span");
+        top.append(node("strong", "", figure.name), node("em", "", `距离 ${figure.distance}/100`));
+        item.append(top, node("small", "", figure.matches.join(" · ")));
+        similarGrid.append(item);
+      });
+      similarBlock.append(similarGrid);
+      body.append(similarBlock);
+    }
+
+    if (foundation.correctionPaths?.length) {
+      const correctionBlock = node("section", "model-evidence correction-model");
+      correctionBlock.append(node("h4", "", "双向纠偏如何工作"));
+      const pathGrid = node("div", "correction-paths");
+      foundation.correctionPaths.forEach((path) => {
+        const item = node("div");
+        item.append(node("strong", "", path.label));
+        const steps = node("div", "correction-steps");
+        path.steps.forEach((step, index) => {
+          steps.append(node("span", "", step));
+          if (index < path.steps.length - 1) steps.append(node("b", "", "→"));
+        });
+        item.append(steps, node("p", "", path.description));
+        pathGrid.append(item);
+      });
+      correctionBlock.append(pathGrid);
+      body.append(correctionBlock);
+    }
+
     if (foundation.appliedRules.length) {
-      const rules = node("div", "foundation-rules");
+      const rules = node("section", "foundation-rules");
+      rules.append(node("h4", "", "本次采用的专业规则"));
       foundation.appliedRules.forEach((rule) => {
         const item = node("p");
         item.append(node("strong", "", rule.topic), document.createTextNode(rule.summary));
@@ -396,6 +473,19 @@ function renderReport(record) {
     content.append(details);
   }
 
+  const sectionIllustrations = {
+    career: {
+      src: "./assets/report-path.png",
+      alt: "青绿群山之间的金色长路，象征事业选择与长期积累",
+      caption: "事业不是一条笔直上升的线，更像在不同山势之间选择可以长期走下去的路。",
+    },
+    relationships: {
+      src: "./assets/report-relationships.png",
+      alt: "由桥与水景相连的明亮国风庭院，象征关系中的亲近与边界",
+      caption: "好的关系不是取消边界，而是在各自站稳之后，仍愿意为彼此留一座桥。",
+    },
+  };
+
   record.report.sections.forEach((section, sectionIndex) => {
     const anchor = node("a", "", section.title);
     anchor.href = `#report-${section.id}`;
@@ -406,6 +496,16 @@ function renderReport(record) {
     sectionNode.append(node("span", "report-section-number", String(sectionIndex + 1).padStart(2, "0")));
     sectionNode.append(node("h3", "", section.title));
     sectionNode.append(node("p", "report-summary", section.summary));
+    const illustrationData = sectionIllustrations[section.id];
+    if (illustrationData) {
+      const figure = node("figure", "section-illustration");
+      const image = document.createElement("img");
+      image.src = illustrationData.src;
+      image.alt = illustrationData.alt;
+      image.loading = "lazy";
+      figure.append(image, node("figcaption", "", illustrationData.caption));
+      sectionNode.append(figure);
+    }
     if (section.technical) {
       const technical = node("p", "technical-cue");
       technical.append(node("strong", "", "专业线索"), document.createTextNode(section.technical));

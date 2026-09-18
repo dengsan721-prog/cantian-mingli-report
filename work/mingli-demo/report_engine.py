@@ -45,6 +45,17 @@ BRANCH_ELEMENT = {
     "申": "金", "酉": "金", "亥": "水", "子": "水",
 }
 
+NOTABLE_PUBLIC_NAMES = {
+    "WD_Q937": "阿尔伯特·爱因斯坦",
+    "WD_Q7186": "玛丽·居里",
+    "WD_Q692": "威廉·莎士比亚",
+    "WD_Q517": "拿破仑一世",
+    "WD_Q19837": "史蒂夫·乔布斯",
+    "WD_Q76": "贝拉克·奥巴马",
+    "WD_Q22686": "唐纳德·特朗普",
+    "WD_Q42": "道格拉斯·亚当斯",
+}
+
 ELEMENT_PROFILE = {
     "木": {
         "strength": "规划、生长与建立秩序",
@@ -143,6 +154,23 @@ def load_knowledge_foundation() -> dict[str, Any]:
         "caseStudies": 0,
         "correctionRecords": 0,
     }
+    coverage = {
+        "birthStartYear": None,
+        "birthEndYear": None,
+        "birthSpanYears": 0,
+        "eventStartYear": None,
+        "eventEndYear": None,
+        "exactDateRecords": 0,
+        "timedBirthRecords": 0,
+        "eventTypeCount": 0,
+    }
+    validation = {
+        "metricRecords": 0,
+        "rectificationRuns": 0,
+        "calibrationEvents": 0,
+        "holdoutEvents": 0,
+    }
+    representative_people: list[str] = []
     table_map = {
         "publicPeople": "public_persons",
         "publicEvents": "life_events_public",
@@ -152,9 +180,68 @@ def load_knowledge_foundation() -> dict[str, Any]:
     }
     if database_path.exists():
         conn = sqlite3.connect(database_path)
+        conn.row_factory = sqlite3.Row
         try:
             for key, table in table_map.items():
                 stats[key] = int(conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+            birth_range = conn.execute(
+                """
+                SELECT MIN(CAST(SUBSTR(date_standard, 1, 4) AS INTEGER)) AS start_year,
+                       MAX(CAST(SUBSTR(date_standard, 1, 4) AS INTEGER)) AS end_year,
+                       SUM(CASE WHEN date_precision = 'day' THEN 1 ELSE 0 END) AS exact_dates,
+                       SUM(CASE WHEN time_text IS NOT NULL AND TRIM(time_text) <> '' THEN 1 ELSE 0 END) AS timed_births
+                FROM birth_facts
+                WHERE date_standard IS NOT NULL
+                """
+            ).fetchone()
+            event_range = conn.execute(
+                """
+                SELECT MIN(CAST(SUBSTR(event_date, 1, 4) AS INTEGER)) AS start_year,
+                       MAX(CAST(SUBSTR(event_date, 1, 4) AS INTEGER)) AS end_year,
+                       COUNT(DISTINCT event_type) AS event_types
+                FROM life_events_public
+                WHERE event_date IS NOT NULL
+                """
+            ).fetchone()
+            rectification = conn.execute(
+                """
+                SELECT COUNT(*) AS runs,
+                       COALESCE(SUM(calibration_event_count), 0) AS calibration_events,
+                       COALESCE(SUM(holdout_event_count), 0) AS holdout_events
+                FROM birth_time_rectification_runs
+                """
+            ).fetchone()
+            coverage.update({
+                "birthStartYear": birth_range["start_year"],
+                "birthEndYear": birth_range["end_year"],
+                "birthSpanYears": (
+                    int(birth_range["end_year"]) - int(birth_range["start_year"]) + 1
+                    if birth_range["start_year"] is not None and birth_range["end_year"] is not None
+                    else 0
+                ),
+                "eventStartYear": event_range["start_year"],
+                "eventEndYear": event_range["end_year"],
+                "exactDateRecords": int(birth_range["exact_dates"] or 0),
+                "timedBirthRecords": int(birth_range["timed_births"] or 0),
+                "eventTypeCount": int(event_range["event_types"] or 0),
+            })
+            validation.update({
+                "metricRecords": int(conn.execute("SELECT COUNT(*) FROM validation_metrics").fetchone()[0]),
+                "rectificationRuns": int(rectification["runs"] or 0),
+                "calibrationEvents": int(rectification["calibration_events"] or 0),
+                "holdoutEvents": int(rectification["holdout_events"] or 0),
+            })
+            example_ids = ("WD_Q937", "WD_Q7186", "WD_Q692", "WD_Q517", "WD_Q19837", "WD_Q76")
+            placeholders = ",".join("?" for _ in example_ids)
+            example_rows = conn.execute(
+                f"SELECT public_person_id, primary_name FROM public_persons WHERE public_person_id IN ({placeholders})",
+                example_ids,
+            ).fetchall()
+            names_by_id = {
+                row["public_person_id"]: NOTABLE_PUBLIC_NAMES.get(row["public_person_id"], row["primary_name"])
+                for row in example_rows
+            }
+            representative_people = [names_by_id[item] for item in example_ids if item in names_by_id]
         finally:
             conn.close()
     return {
@@ -164,7 +251,89 @@ def load_knowledge_foundation() -> dict[str, Any]:
         "knowledgeRuleCount": len(rules),
         "rules": rules,
         "stats": stats,
+        "coverage": coverage,
+        "validation": validation,
+        "representativePeople": representative_people,
     }
+
+
+def similar_public_figures(chart: dict[str, Any], limit: int = 3) -> list[dict[str, Any]]:
+    database_path = SYSTEM_ROOT / "data" / "mingli_validation.db"
+    if not database_path.exists():
+        return []
+
+    target_pillars = [chart.get(key) or "" for key in ("year_pillar", "month_pillar", "day_pillar")]
+    target_day_master = chart.get("day_master") or ""
+    target_month_command = chart.get("month_command") or ""
+    notable_ids = (
+        "WD_Q937", "WD_Q7186", "WD_Q692", "WD_Q517",
+        "WD_Q19837", "WD_Q76", "WD_Q22686", "WD_Q42",
+    )
+    placeholders = ",".join("?" for _ in notable_ids)
+    query = f"""
+        SELECT pp.public_person_id, pp.primary_name, cs.day_master, cs.month_command,
+               cs.year_pillar, cs.month_pillar, cs.day_pillar
+        FROM chart_snapshots cs
+        JOIN public_persons pp ON pp.public_person_id = cs.subject_id
+        WHERE cs.day_master IS NOT NULL AND cs.month_command IS NOT NULL
+          AND pp.public_person_id IN ({placeholders})
+    """
+    conn = sqlite3.connect(database_path)
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute(query, notable_ids).fetchall()
+    finally:
+        conn.close()
+
+    stem_order = "甲乙丙丁戊己庚辛壬癸"
+    branch_order = "子丑寅卯辰巳午未申酉戌亥"
+
+    def cycle_distance(left: str, right: str, order: str) -> int:
+        if left not in order or right not in order:
+            return len(order) // 2
+        direct = abs(order.index(left) - order.index(right))
+        return min(direct, len(order) - direct)
+
+    def pillar_distance(candidate: str, target: str) -> int:
+        if len(candidate) < 2 or len(target) < 2:
+            return 11
+        return cycle_distance(candidate[0], target[0], stem_order) + cycle_distance(candidate[1], target[1], branch_order)
+
+    ranked: list[dict[str, Any]] = []
+    for row in rows:
+        row_pillars = [row["year_pillar"] or "", row["month_pillar"] or "", row["day_pillar"] or ""]
+        candidate_stem = str(row["day_master"])[:1]
+        target_stem = target_day_master[:1]
+        raw_distance = cycle_distance(candidate_stem, target_stem, stem_order) * 4
+        raw_distance += cycle_distance(str(row["month_command"])[:1], target_month_command[:1], branch_order) * 3
+        raw_distance += sum(
+            pillar_distance(candidate, target) * weight
+            for candidate, target, weight in zip(row_pillars, target_pillars, (0.8, 1.2, 1.8))
+        )
+        distance = min(round(raw_distance / 80 * 100), 100)
+        matches: list[str] = []
+        if row["day_master"] == target_day_master:
+            matches.append("同日主")
+        elif STEM_ELEMENT.get(candidate_stem) == STEM_ELEMENT.get(target_stem):
+            matches.append("同五行")
+        if row["month_command"] == target_month_command:
+            matches.append("同月令")
+        elif BRANCH_ELEMENT.get(str(row["month_command"])[:1]) == BRANCH_ELEMENT.get(target_month_command[:1]):
+            matches.append("月令同气")
+        for label, candidate, target in zip(
+            ("同年柱", "同月柱", "同日柱"),
+            row_pillars,
+            target_pillars,
+        ):
+            if candidate == target and target:
+                matches.append(label)
+        ranked.append({
+            "name": NOTABLE_PUBLIC_NAMES.get(row["public_person_id"], row["primary_name"]),
+            "distance": distance,
+            "matches": matches[:3] or ["知名样本参照"],
+        })
+    ranked.sort(key=lambda item: (item["distance"], item["name"]))
+    return ranked[:limit]
 
 
 def _system_imports() -> tuple[Any, Any, Any]:
@@ -674,13 +843,30 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
             "highlights": highlights,
             "sections": sections,
             "foundation": {
+                "modelName": "多源命理结构研判模型",
                 "databaseName": foundation["databaseName"],
                 "version": foundation["version"],
                 "theorySourceCount": foundation["theorySourceCount"],
                 "knowledgeRuleCount": foundation["knowledgeRuleCount"],
                 "appliedRules": applied_rules,
                 "stats": foundation["stats"],
-                "note": "样本规模用于扩大覆盖、发现偏差与保存校验线索，不代表命理预测已经获得科学准确率证明。",
+                "coverage": foundation["coverage"],
+                "validation": foundation["validation"],
+                "representativePeople": foundation["representativePeople"],
+                "similarFigures": similar_public_figures(chart),
+                "correctionPaths": [
+                    {
+                        "label": "正向复核",
+                        "steps": ["出生资料", "历法与时制校验", "命盘结构", "人生事件回验"],
+                        "description": "先由出生信息形成结构判断，再用真实经历检查哪些结论成立、哪些需要降级。",
+                    },
+                    {
+                        "label": "反向校时",
+                        "steps": ["已发生事件", "十二时辰候选", "校时集打分", "留出集复核"],
+                        "description": "对时辰不详者只生成候选，不用同一批事件既选答案又证明答案，减少自我印证。",
+                    },
+                ],
+                "note": "样本规模用于扩大覆盖、寻找结构近邻、发现规则偏差与保存校验线索；结构距离只在本模型内部用于排序，不代表两个人命运相同，也不等同于已经获得科学预测准确率。",
             },
             "disclosure": "这份报告以传统命理结构作人生观察与情境预测。它可以提供另一种理解自己的语言，但不会替你决定人生；所有预测都应等待现实验证，也不能替代医疗、法律、投资等专业意见。",
         },
