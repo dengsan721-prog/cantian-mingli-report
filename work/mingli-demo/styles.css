@@ -435,8 +435,8 @@ a:focus-visible {
 .form-view::before {
   position: absolute;
   inset: 0 -36px;
-  background: url("./assets/cantian-texture.png") center / cover fixed;
-  opacity: 0.035;
+  background: #fbfcfb url("./assets/celestial-page-pattern.png") center top / cover fixed no-repeat;
+  opacity: 0.88;
   content: "";
   pointer-events: none;
   z-index: -1;
@@ -445,7 +445,8 @@ a:focus-visible {
 #birthForm {
   border: 1px solid #e1e3e8;
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.91);
+  backdrop-filter: blur(7px);
   box-shadow: 0 16px 48px rgba(36, 42, 52, 0.07);
   overflow: hidden;
 }
@@ -459,7 +460,7 @@ a:focus-visible {
   min-height: 88px;
   padding: 18px 34px;
   border-bottom: 1px solid var(--line-soft);
-  background: #fafbfd;
+  background: rgba(250, 252, 253, 0.9);
   overflow: hidden;
   isolation: isolate;
 }
@@ -1107,14 +1108,18 @@ a:focus-visible {
 
 .report-view {
   padding-bottom: 80px;
-  background: #fbfcfe;
+  background: #fbfcfe url("./assets/celestial-page-pattern.png") center top / 100% auto fixed repeat-y;
 }
 
 .report-hero {
   position: relative;
   padding: 38px clamp(24px, 5vw, 72px) 34px;
   color: #17242e;
-  background: #eef7f7 url("./assets/report-overview.png") center 52% / cover no-repeat;
+  background-color: #eef7f7;
+  background-image: var(--report-hero-image, url("./assets/report-overview.png"));
+  background-position: var(--report-hero-position, center 52%);
+  background-size: cover;
+  background-repeat: no-repeat;
   overflow: hidden;
   isolation: isolate;
 }
@@ -1695,6 +1700,8 @@ a:focus-visible {
 
 .section-illustration {
   margin: 22px 0 24px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .section-illustration img {
@@ -1703,6 +1710,8 @@ a:focus-visible {
   aspect-ratio: 16 / 7;
   border-radius: 8px;
   object-fit: cover;
+  transform: scale(var(--illustration-scale, 1));
+  transition: transform 300ms ease;
 }
 
 .section-illustration figcaption {
@@ -1932,6 +1941,12 @@ a:focus-visible {
   .form-view::before {
     right: 0;
     left: 0;
+    background-attachment: scroll;
+  }
+
+  .report-view {
+    background-size: auto 900px;
+    background-attachment: scroll;
   }
 
   .form-section {

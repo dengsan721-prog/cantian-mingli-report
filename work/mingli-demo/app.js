@@ -304,9 +304,17 @@ function renderReport(record) {
   reportActions.hidden = false;
   $("#pageEyebrow").textContent = "命理综合研判";
   $("#pageTitle").textContent = record.report.title;
+  const imageSeed = record.recordId || `${record.input.name}:${record.input.solarDate}:${record.report.generatedAt}`;
+  const imageLibrary = globalThis.MingliImages;
 
   const hero = $("#reportHero");
   hero.replaceChildren();
+  if (imageLibrary) {
+    const heroVisual = imageLibrary.pickAny(["palace", "cosmos", "mountains", "elements"], `${imageSeed}:hero`);
+    hero.style.setProperty("--report-hero-image", `url("${heroVisual.src}")`);
+    hero.style.setProperty("--report-hero-position", heroVisual.position);
+    hero.dataset.imageId = heroVisual.id;
+  }
   const heroInner = node("div", "report-hero-inner");
   const status = node("div", "report-status-row");
   status.append(
@@ -473,17 +481,12 @@ function renderReport(record) {
     content.append(details);
   }
 
-  const sectionIllustrations = {
-    career: {
-      src: "./assets/report-path.png",
-      alt: "青绿群山之间的金色长路，象征事业选择与长期积累",
-      caption: "事业不是一条笔直上升的线，更像在不同山势之间选择可以长期走下去的路。",
-    },
-    relationships: {
-      src: "./assets/report-relationships.png",
-      alt: "由桥与水景相连的明亮国风庭院，象征关系中的亲近与边界",
-      caption: "好的关系不是取消边界，而是在各自站稳之后，仍愿意为彼此留一座桥。",
-    },
+  const sectionIllustrationCategories = {
+    structure: "elements",
+    career: "steps",
+    relationships: "pools",
+    "turning-points": "cosmos",
+    wellbeing: "mountains",
   };
 
   record.report.sections.forEach((section, sectionIndex) => {
@@ -496,13 +499,18 @@ function renderReport(record) {
     sectionNode.append(node("span", "report-section-number", String(sectionIndex + 1).padStart(2, "0")));
     sectionNode.append(node("h3", "", section.title));
     sectionNode.append(node("p", "report-summary", section.summary));
-    const illustrationData = sectionIllustrations[section.id];
-    if (illustrationData) {
+    const illustrationCategory = sectionIllustrationCategories[section.id];
+    if (illustrationCategory && imageLibrary) {
+      const illustrationData = imageLibrary.pick(illustrationCategory, `${imageSeed}:${section.id}`);
       const figure = node("figure", "section-illustration");
+      figure.dataset.imageId = illustrationData.id;
+      figure.style.setProperty("--illustration-scale", illustrationData.scale);
       const image = document.createElement("img");
       image.src = illustrationData.src;
       image.alt = illustrationData.alt;
       image.loading = "lazy";
+      image.style.objectPosition = illustrationData.position;
+      image.style.filter = `saturate(${illustrationData.saturation}) brightness(${illustrationData.brightness})`;
       figure.append(image, node("figcaption", "", illustrationData.caption));
       sectionNode.append(figure);
     }
