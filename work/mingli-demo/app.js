@@ -434,7 +434,7 @@ function renderReport(record) {
   if (record.report.highlights?.length) {
     const highlights = node("section", "report-highlights");
     const heading = node("div", "highlights-heading");
-    heading.append(node("span", "", "先看这四点"), node("small", "", "整份报告的核心提要"));
+    heading.append(node("span", "", "命盘四纲"), node("small", "", "全篇研判的核心纲领"));
     highlights.append(heading);
     const grid = node("div", "highlights-grid");
     record.report.highlights.forEach((highlight, index) => {

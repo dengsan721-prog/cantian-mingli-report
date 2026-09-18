@@ -8,20 +8,20 @@
   --faint: #8e8e93;
   --line: #d2d2d7;
   --line-soft: #e5e5ea;
-  --blue: #66527d;
-  --blue-hover: #564568;
-  --blue-soft: #f3eef7;
+  --blue: #526f93;
+  --blue-hover: #425c7d;
+  --blue-soft: #eef3f8;
   --red: #c9342f;
   --red-soft: #fff1f0;
   --gold: #9a6b13;
   --gold-soft: #fff8e8;
   --green: #227746;
   --green-soft: #eef8f1;
-  --jade: #66527d;
-  --jade-deep: #51415f;
-  --jade-soft: #f4eef6;
-  --divine: #66527d;
-  --divine-deep: #51415f;
+  --jade: #526f93;
+  --jade-deep: #425c7d;
+  --jade-soft: #eef3f8;
+  --divine: #526f93;
+  --divine-deep: #425c7d;
   --ritual-gold: #a77a2c;
   --ritual-line: #ddcfad;
   --radius: 8px;
@@ -152,11 +152,11 @@ a:focus-visible {
   border: 1px solid rgba(180, 148, 74, 0.72);
   color: #fffdf6;
   background-color: var(--divine);
-  background-image: url("./assets/gallery/star-chart-01.png");
+  background-image: url("./assets/report-four-guides-brocade.png");
   background-position: center;
   background-size: 180px auto;
   background-blend-mode: soft-light;
-  box-shadow: 0 7px 20px rgba(74, 58, 91, 0.26), 0 0 0 3px rgba(255, 253, 246, 0.52);
+  box-shadow: 0 7px 20px rgba(58, 79, 107, 0.26), 0 0 0 3px rgba(255, 253, 246, 0.52);
   font-family: "Kaiti SC", "STKaiti", serif;
   font-size: 22px;
   line-height: 1;
@@ -165,7 +165,7 @@ a:focus-visible {
 .brand-row strong {
   display: block;
   min-width: 0;
-  color: #203d37;
+  color: #34455f;
   font-family: var(--report-display);
   font-size: 14px;
   font-weight: 700;
@@ -185,11 +185,11 @@ a:focus-visible {
   border-radius: var(--radius);
   color: #fff;
   background-color: var(--divine);
-  background-image: url("./assets/gallery/star-chart-01.png");
+  background-image: url("./assets/report-four-guides-brocade.png");
   background-position: center 46%;
   background-size: 520px auto;
   background-blend-mode: soft-light;
-  box-shadow: 0 8px 22px rgba(74, 58, 91, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  box-shadow: 0 8px 22px rgba(58, 79, 107, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
   font-weight: 600;
   cursor: pointer;
 }
@@ -292,11 +292,11 @@ a:focus-visible {
   color: #fff;
   border-color: rgba(185, 149, 77, 0.58);
   background-color: var(--divine);
-  background-image: url("./assets/gallery/star-chart-01.png");
+  background-image: url("./assets/report-four-guides-brocade.png");
   background-position: center 55%;
   background-size: 520px auto;
   background-blend-mode: soft-light;
-  box-shadow: 0 9px 22px rgba(74, 58, 91, 0.22);
+  box-shadow: 0 9px 22px rgba(58, 79, 107, 0.22);
 }
 
 .history-item-head,
@@ -401,7 +401,7 @@ a:focus-visible {
 
 .stage-header.form-mode .eyebrow {
   margin: 0;
-  color: #43374f;
+  color: #354963;
   font-family: var(--report-display);
   font-size: 20px;
   font-weight: 700;
@@ -443,7 +443,7 @@ a:focus-visible {
 }
 
 .stage-header.report-mode h1 {
-  color: #40334c;
+  color: #34455f;
   font-family: var(--report-display);
   font-size: 25px;
   font-weight: 700;
@@ -595,7 +595,7 @@ a:focus-visible {
 .section-heading h2 {
   margin: 0;
   font-size: 18px;
-  color: #44384f;
+  color: #3c4d64;
   font-family: var(--report-display);
   font-weight: 700;
   line-height: 1.3;
@@ -747,7 +747,7 @@ a:focus-visible {
 }
 
 .segmented-control input:checked + span {
-  color: #4b3c59;
+  color: #3c5573;
   background: #fffef9;
   box-shadow: 0 1px 4px rgba(34, 76, 67, 0.14), 0 -2px 0 rgba(167, 122, 44, 0.46) inset;
 }
@@ -851,7 +851,7 @@ a:focus-visible {
 .time-mode-control input:checked + span {
   color: #fff;
   background: var(--jade);
-  box-shadow: 0 4px 12px rgba(74, 58, 91, 0.22);
+  box-shadow: 0 4px 12px rgba(58, 79, 107, 0.22);
 }
 
 .time-mode-control input:focus-visible + span {
@@ -904,7 +904,7 @@ a:focus-visible {
   overflow: hidden;
   border: 1px solid #ddd2b7;
   border-radius: 6px;
-  color: #53665f;
+  color: #596577;
   background: #fffdf6;
   cursor: pointer;
   font-size: 10px;
@@ -1068,7 +1068,7 @@ a:focus-visible {
 }
 
 .event-summary-copy strong {
-  color: #44384f;
+  color: #3c4d64;
   font-family: var(--report-display);
   font-size: 17px;
   font-weight: 650;
@@ -1113,14 +1113,14 @@ a:focus-visible {
   margin: 0 0 14px;
   padding: 11px 13px;
   border-left: 3px solid #b9954d;
-  color: #53645e;
+  color: #596577;
   background: #f3f7f3;
   font-size: 12px;
   line-height: 1.6;
 }
 
 .event-explainer strong {
-  color: #28594f;
+  color: #49637f;
 }
 
 .event-row {
@@ -1199,11 +1199,11 @@ a:focus-visible {
 
 .form-view .primary-button {
   background-color: var(--divine);
-  background-image: url("./assets/gallery/star-chart-01.png");
+  background-image: url("./assets/report-four-guides-brocade.png");
   background-position: center 52%;
   background-size: 620px auto;
   background-blend-mode: soft-light;
-  box-shadow: 0 8px 22px rgba(74, 58, 91, 0.24), 0 0 0 1px rgba(167, 122, 44, 0.34) inset;
+  box-shadow: 0 8px 22px rgba(58, 79, 107, 0.24), 0 0 0 1px rgba(167, 122, 44, 0.34) inset;
 }
 
 .form-view .primary-button:hover {
@@ -1385,7 +1385,7 @@ a:focus-visible {
 .report-highlights::before {
   position: absolute;
   inset: 0;
-  background: url("./assets/gallery/star-chart-01.png") center 46% / cover no-repeat;
+  background: url("./assets/report-four-guides-brocade.png") center 46% / cover no-repeat;
   content: "";
   opacity: 0.12;
   pointer-events: none;
@@ -1400,7 +1400,7 @@ a:focus-visible {
 }
 
 .highlights-heading span {
-  color: #4a3b58;
+  color: #3e5675;
   font-family: var(--report-display);
   font-size: 18px;
   font-weight: 700;
@@ -1422,26 +1422,54 @@ a:focus-visible {
   counter-reset: highlight;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0;
-  border-top: 1px solid rgba(84, 112, 102, 0.2);
-  border-left: 1px solid rgba(84, 112, 102, 0.2);
+  gap: 12px;
 }
 
 .highlight-item {
   position: relative;
-  min-height: 94px;
-  padding: 16px 52px 16px 16px;
-  border-right: 1px solid rgba(84, 112, 102, 0.2);
-  border-bottom: 1px solid rgba(84, 112, 102, 0.2);
-  background: rgba(255, 255, 252, 0.7);
+  min-height: 128px;
+  padding: 24px 58px 22px 22px;
+  border: 1px solid rgba(174, 132, 53, 0.66);
+  border-radius: 5px;
+  background-color: rgba(250, 248, 240, 0.7);
+  background-image: url("./assets/report-four-guides-brocade.png");
+  background-size: 200% auto;
+  background-repeat: no-repeat;
+  background-blend-mode: screen;
+  box-shadow: 0 9px 24px rgba(61, 82, 107, 0.1), inset 0 0 0 4px rgba(255, 253, 245, 0.72), inset 0 0 0 5px rgba(174, 132, 53, 0.34);
   counter-increment: highlight;
+  overflow: hidden;
+}
+
+.highlight-item::before {
+  position: absolute;
+  inset: 9px;
+  border: 1px solid rgba(177, 139, 65, 0.26);
+  content: "";
+  pointer-events: none;
+}
+
+.highlight-item.tone-1 {
+  background-position: left 21%;
+}
+
+.highlight-item.tone-2 {
+  background-position: right 21%;
+}
+
+.highlight-item.tone-3 {
+  background-position: left 79%;
+}
+
+.highlight-item.tone-4 {
+  background-position: right 79%;
 }
 
 .highlight-item::after {
   position: absolute;
   top: 12px;
   right: 15px;
-  color: rgba(167, 122, 44, 0.22);
+  color: rgba(151, 108, 31, 0.4);
   content: "0" counter(highlight);
   font-family: var(--report-display);
   font-size: 24px;
@@ -1450,20 +1478,22 @@ a:focus-visible {
 
 .highlight-item span,
 .highlight-item strong {
+  position: relative;
   display: block;
+  z-index: 1;
 }
 
 .highlight-item span {
   margin-bottom: 7px;
-  color: #6c775f;
+  color: #657188;
   font-size: 10px;
   font-weight: 650;
 }
 
 .highlight-item strong {
-  color: #3f3449;
+  color: #34465e;
   font-family: var(--report-display);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.55;
 }
@@ -2235,8 +2265,8 @@ a:focus-visible {
   }
 
   .highlight-item {
-    min-height: 96px;
-    padding: 11px 12px;
+    min-height: 116px;
+    padding: 19px 42px 17px 17px;
   }
 
   .foundation-stats {
