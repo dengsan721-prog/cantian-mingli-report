@@ -54,6 +54,7 @@ class ReportEngineTests(unittest.TestCase):
         generated = generate_report(exact_payload())
 
         self.assertEqual(generated["quality"]["level"], "L3")
+        self.assertEqual(generated["quality"]["maxReportLevel"], "四柱综合报告")
         self.assertEqual(len(generated["chart"]["pillars"]), 4)
         self.assertTrue(generated["chart"]["trueSolarVariant"]["changesHourPillar"])
         self.assertIn("FEWER_THAN_FIVE_EVENTS", generated["quality"]["reasonCodes"])

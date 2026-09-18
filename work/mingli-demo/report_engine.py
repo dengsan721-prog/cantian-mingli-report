@@ -472,13 +472,13 @@ def quality_assessment(data: dict[str, Any]) -> dict[str, Any]:
         and len(data["events"]) >= 5
         and event_types >= 3
     ):
-        level, report_level = "L4", "校准四柱报告"
+        level, report_level = "L4", "四柱精研报告"
     elif has_time and has_place:
-        level, report_level = "L3", "暂定四柱报告"
+        level, report_level = "L3", "四柱综合报告"
     elif has_place:
-        level, report_level = "L2", "三柱情境报告"
+        level, report_level = "L2", "三柱综合报告"
     else:
-        level, report_level = "L1", "基础三柱报告"
+        level, report_level = "L1", "基础研判报告"
     return {
         "level": level,
         "maxReportLevel": report_level,

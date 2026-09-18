@@ -94,8 +94,13 @@ a:focus-visible {
   width: var(--sidebar-width);
   height: 100vh;
   padding: 24px 16px 18px;
-  border-right: 1px solid var(--line-soft);
-  background: var(--surface);
+  border-right: 1px solid #ddd5c4;
+  background-color: #f7f5ee;
+  background-image: url("./assets/celestial-page-pattern.png");
+  background-position: 57% top;
+  background-size: auto 900px;
+  background-repeat: repeat-y;
+  background-blend-mode: soft-light;
   z-index: 20;
 }
 
@@ -114,8 +119,10 @@ a:focus-visible {
   height: 38px;
   place-items: center;
   border-radius: 8px;
-  color: #fff;
-  background: #232326;
+  border: 1px solid rgba(180, 148, 74, 0.72);
+  color: #fffdf6;
+  background: #24584f;
+  box-shadow: 0 5px 16px rgba(36, 88, 79, 0.16);
   font-family: "Kaiti SC", "STKaiti", serif;
   font-size: 22px;
   line-height: 1;
@@ -127,14 +134,16 @@ a:focus-visible {
 }
 
 .brand-row strong {
+  color: #203d37;
+  font-family: var(--report-display);
   font-size: 16px;
-  font-weight: 650;
+  font-weight: 700;
   line-height: 1.25;
 }
 
 .brand-row span {
   margin-top: 2px;
-  color: var(--muted);
+  color: #73756e;
   font-size: 12px;
 }
 
@@ -149,12 +158,16 @@ a:focus-visible {
   border: 0;
   border-radius: var(--radius);
   color: #fff;
-  background: var(--blue);
+  background: #286a5d;
+  box-shadow: 0 7px 18px rgba(40, 106, 93, 0.16);
   font-weight: 600;
   cursor: pointer;
 }
 
-.new-report-button:hover,
+.new-report-button:hover {
+  background: #21584e;
+}
+
 .primary-button:hover {
   background: var(--blue-hover);
 }
@@ -204,15 +217,15 @@ a:focus-visible {
   width: 100%;
   height: 36px;
   padding: 0 10px 0 32px;
-  border: 1px solid transparent;
+  border: 1px solid rgba(172, 147, 91, 0.22);
   border-radius: 7px;
   color: var(--ink);
-  background: var(--surface-strong);
+  background: rgba(255, 255, 255, 0.68);
   font-size: 13px;
 }
 
 .search-field input:focus {
-  border-color: var(--blue);
+  border-color: #4b8176;
   background: #fff;
 }
 
@@ -236,12 +249,13 @@ a:focus-visible {
 }
 
 .history-item:hover {
-  background: #eaeaee;
+  background: rgba(232, 226, 211, 0.76);
 }
 
 .history-item.active {
   color: #fff;
-  background: var(--blue);
+  background: #2c6258;
+  box-shadow: 0 7px 18px rgba(44, 98, 88, 0.14);
 }
 
 .history-item-head,

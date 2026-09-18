@@ -73,6 +73,14 @@ function genderLabel(value) {
   return { male: "男", female: "女", unknown: "未知" }[value] || "未知";
 }
 
+function reportDisplayText(value) {
+  return String(value || "")
+    .replaceAll("校准四柱报告", "四柱精研报告")
+    .replaceAll("暂定四柱报告", "四柱综合报告")
+    .replaceAll("三柱情境报告", "三柱综合报告")
+    .replaceAll("基础三柱报告", "基础研判报告");
+}
+
 function closeSidebar() {
   $("#historySidebar").classList.remove("open");
   $("#sidebarScrim").hidden = true;
@@ -319,7 +327,7 @@ function renderReport(record) {
   const status = node("div", "report-status-row");
   status.append(
     node("span", "quality-badge", record.quality.level),
-    node("span", "", `${record.quality.maxReportLevel} · ${formatDateTime(record.report.generatedAt)}`)
+    node("span", "", `${reportDisplayText(record.quality.maxReportLevel) || "命理综合报告"} · ${formatDateTime(record.report.generatedAt)}`)
   );
   heroInner.append(status, node("h2", "", record.report.title));
   heroInner.append(node("p", "", "这不是给人生下定义，而是借一张传统命盘，陪你重新看看自己的性情、关系与选择。"));
@@ -537,7 +545,7 @@ function renderReport(record) {
     }
     if (section.note) {
       const note = node("p", "section-note");
-      note.append(node("strong", "", "简要注释："), document.createTextNode(section.note));
+      note.append(node("strong", "", "简要注释："), document.createTextNode(reportDisplayText(section.note)));
       sectionNode.append(note);
     }
     content.append(sectionNode);
