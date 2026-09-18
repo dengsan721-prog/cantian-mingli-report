@@ -22,6 +22,8 @@ const stageHeader = $(".stage-header");
 const earthlyBranches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 const enhancedSelects = new WeakMap();
 let activeChoiceSelect = null;
+let activeWheel = null;
+const WHEEL_ITEM_HEIGHT = 44;
 
 function node(tag, className, text) {
   const element = document.createElement(tag);
@@ -194,15 +196,181 @@ function renderChoiceOptions(query = "") {
     });
 }
 
+function wheelOptions(select, override = null) {
+  if (override) return override;
+  return [...select.options]
+    .filter((option) => option.value)
+    .map((option) => ({ value: option.value, label: option.textContent }));
+}
+
+function defaultWheelValue(select, options) {
+  if (select.value) return select.value;
+  const now = new Date();
+  const defaults = {
+    year: String(now.getFullYear() - 30),
+    month: String(now.getMonth() + 1),
+    day: String(now.getDate()),
+    exactHour: "12",
+    exactMinute: "00",
+  };
+  const candidate = defaults[select.id];
+  return options.some((option) => option.value === candidate) ? candidate : options[0]?.value || "";
+}
+
+function setWheelSelection(scroller, value) {
+  const buttons = $$(".wheel-option", scroller);
+  buttons.forEach((button) => {
+    const selected = button.dataset.value === String(value);
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-selected", String(selected));
+  });
+}
+
+function buildWheelColumn(select, label, override = null) {
+  const options = wheelOptions(select, override);
+  const column = node("section", "wheel-column");
+  column.dataset.selectId = select.id;
+  column.append(node("span", "wheel-column-label", label));
+  const frame = node("div", "wheel-frame");
+  const scroller = node("div", "wheel-scroller");
+  scroller.setAttribute("role", "listbox");
+  scroller.setAttribute("aria-label", select.getAttribute("aria-label") || label);
+  const value = activeWheel.values[select.id] || defaultWheelValue(select, options);
+  activeWheel.values[select.id] = value;
+  options.forEach((option) => {
+    const button = node("button", "wheel-option", option.label);
+    button.type = "button";
+    button.dataset.value = option.value;
+    button.setAttribute("role", "option");
+    button.addEventListener("click", () => {
+      const index = options.findIndex((item) => item.value === option.value);
+      activeWheel.values[select.id] = option.value;
+      setWheelSelection(scroller, option.value);
+      if (select.id === "year" || select.id === "month") refreshWheelDayColumn();
+      scroller.scrollTo({ top: index * WHEEL_ITEM_HEIGHT, behavior: "smooth" });
+    });
+    scroller.append(button);
+  });
+  frame.append(node("div", "wheel-focus-line"), scroller);
+  column.append(frame);
+  activeWheel.columns.set(select.id, { select, label, column, scroller, options });
+  setWheelSelection(scroller, value);
+  let scrollTimer;
+  scroller.addEventListener("scroll", () => {
+    if (scroller.dataset.ready !== "true" || !activeWheel) return;
+    const index = Math.max(0, Math.min(options.length - 1, Math.round(scroller.scrollTop / WHEEL_ITEM_HEIGHT)));
+    const selected = options[index];
+    if (!selected) return;
+    activeWheel.values[select.id] = selected.value;
+    setWheelSelection(scroller, selected.value);
+    window.clearTimeout(scrollTimer);
+    scrollTimer = window.setTimeout(() => {
+      if (!activeWheel) return;
+      scroller.scrollTo({ top: index * WHEEL_ITEM_HEIGHT, behavior: "smooth" });
+      if (select.id === "year" || select.id === "month") refreshWheelDayColumn();
+    }, 90);
+  });
+  window.requestAnimationFrame(() => {
+    const index = Math.max(0, options.findIndex((option) => option.value === value));
+    scroller.style.scrollBehavior = "auto";
+    scroller.scrollTop = index * WHEEL_ITEM_HEIGHT;
+    window.requestAnimationFrame(() => {
+      scroller.style.removeProperty("scroll-behavior");
+      scroller.dataset.ready = "true";
+    });
+  });
+  return column;
+}
+
+async function wheelDayOptions() {
+  const year = Number(activeWheel?.values.year);
+  const month = Number(activeWheel?.values.month);
+  const calendar = $('input[name="calendarType"]:checked')?.value || "solar";
+  let maxDay = year && month ? new Date(year, month, 0).getDate() : 31;
+  if (calendar === "lunar" && year && month) {
+    try {
+      const metadata = await loadLunarCalendar(year);
+      const selected = metadata?.months?.find((item) => (
+        Number(item.month) === month && Boolean(item.isLeap) === $("#isLeapMonth").checked
+      ));
+      if (selected) maxDay = Number(selected.days);
+    } catch (error) {
+      showToast(error.message, "error");
+    }
+  }
+  return Array.from({ length: maxDay }, (_, index) => ({ value: String(index + 1), label: `${index + 1} 日` }));
+}
+
+async function refreshWheelDayColumn() {
+  if (activeWheel?.type !== "date") return;
+  const current = activeWheel.columns.get("day");
+  if (!current) return;
+  const options = await wheelDayOptions();
+  if (activeWheel?.type !== "date") return;
+  if (!options.some((option) => option.value === activeWheel.values.day)) {
+    activeWheel.values.day = options.at(-1)?.value || "1";
+  }
+  const replacement = buildWheelColumn($("#day"), "日", options);
+  current.column.replaceWith(replacement);
+}
+
+async function applyWheelSelection() {
+  if (!activeWheel) return;
+  if (activeWheel.type === "date") {
+    $("#year").value = activeWheel.values.year;
+    $("#month").value = activeWheel.values.month;
+    await updateDayOptions();
+    $("#day").value = activeWheel.values.day;
+    [$("#year"), $("#month"), $("#day")].forEach(syncChoiceTrigger);
+  } else {
+    $("#exactHour").value = activeWheel.values.exactHour;
+    $("#exactMinute").value = activeWheel.values.exactMinute;
+    [$("#exactHour"), $("#exactMinute")].forEach(syncChoiceTrigger);
+    updateTimeControls();
+  }
+  $("#choiceDialog").close();
+}
+
+async function openWheelDialog(type) {
+  activeChoiceSelect = null;
+  activeWheel = { type, values: {}, columns: new Map() };
+  const dialog = $("#choiceDialog");
+  dialog.classList.add("wheel-mode");
+  $("#choiceDialogSearch").hidden = true;
+  $("#choiceDialogFooter").hidden = false;
+  $("#choiceDialogTitle").textContent = type === "date" ? "滑动选择出生日期" : "滑动选择出生时刻";
+  const container = $("#choiceOptions");
+  container.className = "choice-options wheel-picker";
+  container.replaceChildren();
+  const definitions = type === "date"
+    ? [[$("#year"), "年"], [$("#month"), "月"], [$("#day"), "日"]]
+    : [[$("#exactHour"), "时"], [$("#exactMinute"), "分"]];
+  definitions.forEach(([select, label]) => container.append(buildWheelColumn(select, label)));
+  dialog.showModal();
+  if (type === "date") await refreshWheelDayColumn();
+}
+
 function openChoiceDialog(select) {
+  if (["year", "month", "day"].includes(select.id)) {
+    openWheelDialog("date");
+    return;
+  }
+  if (["exactHour", "exactMinute"].includes(select.id)) {
+    openWheelDialog("time");
+    return;
+  }
   activeChoiceSelect = select;
+  activeWheel = null;
   const search = $("#choiceDialogSearch");
   const searchInput = $("#choiceSearchInput");
+  const dialog = $("#choiceDialog");
+  dialog.classList.remove("wheel-mode");
+  $("#choiceDialogFooter").hidden = true;
+  $("#choiceOptions").className = "choice-options";
   $("#choiceDialogTitle").textContent = select.dataset.choiceTitle || select.getAttribute("aria-label") || "请选择";
   search.hidden = select.options.length <= 40;
   searchInput.value = "";
   renderChoiceOptions();
-  const dialog = $("#choiceDialog");
   dialog.showModal();
   window.setTimeout(() => {
     const selected = $(".choice-option.selected", dialog);
@@ -725,8 +893,8 @@ function renderReport(record) {
   reportActions.hidden = false;
   stageHeader.classList.remove("form-mode");
   stageHeader.classList.add("report-mode");
-  $("#pageEyebrow").textContent = "命理综合研判";
-  $("#pageTitle").textContent = `${record.input.name} · 研判报告`;
+  $("#pageEyebrow").textContent = "";
+  $("#pageTitle").textContent = "参天·东方智慧命理研判";
   const imageSeed = record.recordId || `${record.input.name}:${record.input.solarDate}:${record.report.generatedAt}`;
   const imageLibrary = globalThis.MingliImages;
   const usedImageSources = new Set();
@@ -750,6 +918,7 @@ function renderReport(record) {
 
   const index = $("#reportIndex");
   const content = $("#reportContent");
+  let foundationPanel = null;
   index.replaceChildren();
   content.replaceChildren();
   appendReadingModes(content);
@@ -913,7 +1082,7 @@ function renderReport(record) {
     }
     body.append(node("p", "foundation-note", foundation.note));
     details.append(body);
-    content.append(details);
+    foundationPanel = details;
   }
 
   const sectionIllustrationCategories = {
@@ -979,6 +1148,13 @@ function renderReport(record) {
     content.append(sectionNode);
   });
 
+  if (foundationPanel) {
+    const footer = node("section", "foundation-footer");
+    const heading = node("div", "foundation-footer-heading");
+    heading.append(node("span", "", "研判依据"), node("strong", "", "模型、数据与双向纠偏"));
+    footer.append(heading, foundationPanel);
+    content.append(footer);
+  }
   content.append(node("p", "disclosure", record.report.disclosure));
   const preferredMode = window.localStorage.getItem("mingliReadMode");
   setReadMode(["summary", "focused", "full"].includes(preferredMode) ? preferredMode : "focused");
@@ -1119,6 +1295,11 @@ $("#historyToggle").addEventListener("click", () => {
 $("#sidebarScrim").addEventListener("click", closeSidebar);
 $("#choiceDialogClose").addEventListener("click", () => $("#choiceDialog").close());
 $("#choiceSearchInput").addEventListener("input", (event) => renderChoiceOptions(event.target.value));
+$("#wheelConfirmButton").addEventListener("click", applyWheelSelection);
+$("#choiceDialog").addEventListener("close", () => {
+  activeWheel = null;
+  activeChoiceSelect = null;
+});
 $("#choiceDialog").addEventListener("click", (event) => {
   if (event.target === $("#choiceDialog")) $("#choiceDialog").close();
 });

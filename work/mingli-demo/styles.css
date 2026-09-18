@@ -182,18 +182,23 @@ a:focus-visible {
   width: 100%;
   min-height: 44px;
   margin: 18px 0 22px;
-  border: 1px solid rgba(185, 149, 77, 0.5);
+  border: 1px solid rgba(210, 173, 92, 0.88);
   border-radius: var(--radius);
-  color: #344c68;
-  background: rgba(255, 253, 246, 0.76);
-  box-shadow: 0 8px 22px rgba(58, 79, 107, 0.12), inset 0 0 0 3px rgba(255, 253, 246, 0.72);
-  font-weight: 600;
+  color: #fffdf4;
+  background-color: #344f70;
+  background-image: url("./assets/report-four-guides-brocade.png");
+  background-position: center;
+  background-size: 420px auto;
+  background-blend-mode: soft-light;
+  box-shadow: 0 10px 25px rgba(42, 62, 88, 0.24), inset 0 0 0 3px rgba(255, 246, 220, 0.13);
+  font-weight: 700;
   cursor: pointer;
 }
 
 .new-report-button:hover {
-  color: #273f5d;
-  background: rgba(246, 241, 226, 0.94);
+  color: #fffef8;
+  background-color: #294667;
+  box-shadow: 0 12px 28px rgba(42, 62, 88, 0.3), inset 0 0 0 3px rgba(255, 246, 220, 0.18);
 }
 
 .new-report-button::before,
@@ -206,7 +211,7 @@ a:focus-visible {
   border-image-slice: 24%;
   border-image-width: 4px;
   content: "";
-  opacity: 0.78;
+  opacity: 0.58;
   pointer-events: none;
 }
 
@@ -1338,15 +1343,20 @@ a:focus-visible {
 
 .form-view .primary-button {
   position: relative;
-  border: 1px solid rgba(174, 132, 53, 0.72);
-  color: #344c68;
-  background: rgba(255, 253, 246, 0.84);
-  box-shadow: 0 8px 22px rgba(58, 79, 107, 0.13), inset 0 0 0 3px rgba(255, 253, 246, 0.72);
+  border: 1px solid rgba(220, 181, 94, 0.92);
+  color: #fffdf4;
+  background-color: #334f70;
+  background-image: url("./assets/gallery/celestial-palace-02.png");
+  background-position: center 46%;
+  background-size: cover;
+  background-blend-mode: soft-light;
+  box-shadow: 0 10px 28px rgba(42, 62, 88, 0.28), inset 0 0 0 3px rgba(255, 244, 214, 0.14), 0 0 20px rgba(185, 147, 72, 0.13);
 }
 
 .form-view .primary-button:hover {
-  color: #273f5d;
-  background: rgba(246, 241, 226, 0.96);
+  color: #fff;
+  background-color: #294667;
+  box-shadow: 0 13px 32px rgba(42, 62, 88, 0.34), inset 0 0 0 3px rgba(255, 244, 214, 0.2), 0 0 24px rgba(185, 147, 72, 0.18);
 }
 
 .form-view .primary-button > span,
@@ -1810,14 +1820,12 @@ a:focus-visible {
 }
 
 .report-layout[data-read-mode="summary"] .report-index,
-.report-content[data-read-mode="summary"] .foundation-panel,
 .report-content[data-read-mode="summary"] .technical-snapshot-panel,
 .report-content[data-read-mode="summary"] .report-section,
 .report-content[data-read-mode="summary"] .disclosure {
   display: none;
 }
 
-.report-content[data-read-mode="focused"] .foundation-panel,
 .report-content[data-read-mode="focused"] .technical-snapshot-panel,
 .report-content[data-read-mode="focused"] .technical-cue,
 .report-content[data-read-mode="focused"] .section-note,
@@ -1958,6 +1966,38 @@ a:focus-visible {
   border-radius: 8px;
   background: #fff;
   overflow: hidden;
+}
+
+.foundation-footer {
+  margin-top: 46px;
+  padding-top: 26px;
+  border-top: 1px solid rgba(168, 128, 51, 0.34);
+}
+
+.foundation-footer-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.foundation-footer-heading span {
+  color: #92702e;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.foundation-footer-heading strong {
+  color: #30445d;
+  font-family: var(--report-display);
+  font-size: 20px;
+}
+
+.foundation-footer .foundation-panel {
+  margin-bottom: 0;
+  border-color: rgba(174, 137, 65, 0.42);
+  background: rgba(255, 254, 249, 0.92);
+  box-shadow: 0 12px 32px rgba(52, 70, 93, 0.08);
 }
 
 .foundation-panel summary {
@@ -2584,6 +2624,115 @@ a:focus-visible {
   padding: 0 8px 8px;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+.choice-dialog.wheel-mode {
+  width: min(500px, calc(100vw - 32px));
+  max-height: none;
+}
+
+.choice-dialog.wheel-mode .choice-dialog-shell {
+  max-height: none;
+}
+
+.wheel-picker {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 16px 6px 0;
+  padding: 0;
+  overflow: visible;
+}
+
+.wheel-dialog-time .wheel-picker,
+.wheel-picker:has(.wheel-column:nth-child(2):last-child) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0 48px;
+}
+
+.wheel-column-label {
+  display: block;
+  margin-bottom: 7px;
+  color: #8b6c35;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.wheel-frame {
+  position: relative;
+  height: 220px;
+  border-top: 1px solid rgba(179, 143, 71, 0.22);
+  border-bottom: 1px solid rgba(179, 143, 71, 0.22);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+}
+
+.wheel-focus-line {
+  position: absolute;
+  top: 88px;
+  right: 0;
+  left: 0;
+  height: 44px;
+  border-top: 1px solid rgba(183, 141, 55, 0.72);
+  border-bottom: 1px solid rgba(183, 141, 55, 0.72);
+  background: rgba(240, 232, 209, 0.38);
+  box-shadow: inset 0 0 18px rgba(193, 151, 67, 0.08);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wheel-scroller {
+  height: 220px;
+  padding: 88px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+}
+
+.wheel-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.wheel-option {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 0 4px;
+  border: 0;
+  color: #78808b;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--report-display);
+  font-size: 14px;
+  scroll-snap-align: center;
+  transition: color 120ms ease, font-size 120ms ease;
+}
+
+.wheel-option.selected {
+  color: #263d58;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.choice-dialog-footer {
+  padding: 14px 6px 4px;
+}
+
+.wheel-confirm-button {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(207, 169, 85, 0.88);
+  border-radius: 6px;
+  color: #fffdf4;
+  background: #344f70;
+  box-shadow: inset 0 0 0 3px rgba(255, 247, 224, 0.1), 0 7px 18px rgba(42, 62, 88, 0.18);
+  cursor: pointer;
+  font-weight: 700;
 }
 
 .choice-option {
