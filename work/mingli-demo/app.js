@@ -17,6 +17,8 @@ const eventsList = $("#eventsList");
 const eventsEmpty = $("#eventsEmpty");
 const stageHeader = $(".stage-header");
 const earthlyBranches = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+const enhancedSelects = new WeakMap();
+let activeChoiceSelect = null;
 
 function node(tag, className, text) {
   const element = document.createElement(tag);
@@ -86,6 +88,15 @@ function populateDateSelects() {
   updateDayOptions();
 }
 
+function populateTimeSelects() {
+  for (let value = 0; value < 24; value += 1) {
+    appendOption($("#exactHour"), String(value).padStart(2, "0"), `${String(value).padStart(2, "0")} 时`);
+  }
+  for (let value = 0; value < 60; value += 1) {
+    appendOption($("#exactMinute"), String(value).padStart(2, "0"), `${String(value).padStart(2, "0")} 分`);
+  }
+}
+
 function updateDayOptions() {
   const day = $("#day");
   const previous = day.value;
@@ -101,6 +112,73 @@ function updateDayOptions() {
   appendOption(day, "", "日期");
   for (let value = 1; value <= maxDay; value += 1) appendOption(day, value, `${value} 日`);
   if (Number(previous) <= maxDay) day.value = previous;
+  syncChoiceTrigger(day);
+}
+
+function syncChoiceTrigger(select) {
+  const enhancement = enhancedSelects.get(select);
+  if (!enhancement) return;
+  const selected = select.options[select.selectedIndex];
+  enhancement.label.textContent = selected?.textContent || select.getAttribute("aria-label") || "请选择";
+  enhancement.trigger.classList.toggle("has-value", Boolean(select.value));
+}
+
+function enhanceSelect(select) {
+  if (!select || enhancedSelects.has(select)) return;
+  select.classList.add("choice-native-select");
+  select.tabIndex = -1;
+  const trigger = node("button", "choice-trigger");
+  trigger.type = "button";
+  trigger.setAttribute("aria-haspopup", "dialog");
+  trigger.setAttribute("aria-label", select.dataset.choiceTitle || select.getAttribute("aria-label") || "打开选择页");
+  const label = node("span");
+  trigger.append(label, node("b", "", "⌄"));
+  select.insertAdjacentElement("afterend", trigger);
+  enhancedSelects.set(select, { trigger, label });
+  select.addEventListener("change", () => syncChoiceTrigger(select));
+  trigger.addEventListener("click", () => openChoiceDialog(select));
+  syncChoiceTrigger(select);
+}
+
+function renderChoiceOptions(query = "") {
+  const container = $("#choiceOptions");
+  container.replaceChildren();
+  if (!activeChoiceSelect) return;
+  const normalizedQuery = query.trim().toLowerCase();
+  [...activeChoiceSelect.options]
+    .filter((option) => option.value && (!normalizedQuery || option.textContent.toLowerCase().includes(normalizedQuery)))
+    .forEach((option) => {
+      const button = node("button", "choice-option", option.textContent);
+      button.type = "button";
+      button.classList.toggle("selected", option.value === activeChoiceSelect.value);
+      button.addEventListener("click", () => {
+        activeChoiceSelect.value = option.value;
+        activeChoiceSelect.dispatchEvent(new Event("change", { bubbles: true }));
+        $("#choiceDialog").close();
+      });
+      container.append(button);
+    });
+}
+
+function openChoiceDialog(select) {
+  activeChoiceSelect = select;
+  const search = $("#choiceDialogSearch");
+  const searchInput = $("#choiceSearchInput");
+  $("#choiceDialogTitle").textContent = select.dataset.choiceTitle || select.getAttribute("aria-label") || "请选择";
+  search.hidden = select.options.length <= 40;
+  searchInput.value = "";
+  renderChoiceOptions();
+  const dialog = $("#choiceDialog");
+  dialog.showModal();
+  window.setTimeout(() => {
+    const selected = $(".choice-option.selected", dialog);
+    if (selected) selected.scrollIntoView({ block: "center" });
+    if (!search.hidden) searchInput.focus();
+  }, 0);
+}
+
+function syncAllChoiceTriggers() {
+  $$("select.choice-native-select").forEach(syncChoiceTrigger);
 }
 
 function genderLabel(value) {
@@ -196,7 +274,10 @@ function setRadio(name, value) {
 
 function setField(id, value) {
   const field = $(`#${id}`);
-  if (field) field.value = value ?? "";
+  if (field) {
+    field.value = value ?? "";
+    if (field.matches("select")) syncChoiceTrigger(field);
+  }
 }
 
 function branchFromHour(hour) {
@@ -208,8 +289,12 @@ function updateTimeControls() {
   $("#exactTimeField").hidden = mode !== "exact";
   $("#branchTimeField").hidden = mode !== "branch";
   $("#unknownTimeHint").hidden = mode !== "unknown";
+  const exactTime = $("#exactHour").value && $("#exactMinute").value
+    ? `${$("#exactHour").value}:${$("#exactMinute").value}`
+    : "";
+  $("#exactTime").value = exactTime;
   $("#timeText").value = mode === "exact"
-    ? $("#exactTime").value
+    ? exactTime
     : mode === "branch"
       ? $("#timeBranch").value
       : "";
@@ -220,17 +305,20 @@ function fillTimeControls(value) {
   const exact = text.match(/(?:^|\D)([01]?\d|2[0-3]):([0-5]\d)(?:\D|$)/);
   const branch = earthlyBranches.find((item) => text.includes(`${item}时`));
   const approximateHour = text.match(/(?:^|\D)([01]?\d|2[0-3])(?:点|时)/);
-  $("#exactTime").value = "";
+  $("#exactHour").value = "";
+  $("#exactMinute").value = "";
   $("#timeBranch").value = "";
   if (exact) {
     setRadio("timeMode", "exact");
-    $("#exactTime").value = `${exact[1].padStart(2, "0")}:${exact[2]}`;
+    $("#exactHour").value = exact[1].padStart(2, "0");
+    $("#exactMinute").value = exact[2];
   } else if (branch || approximateHour) {
     setRadio("timeMode", "branch");
     $("#timeBranch").value = `${branch || branchFromHour(Number(approximateHour[1]))}时`;
   } else {
     setRadio("timeMode", "unknown");
   }
+  syncAllChoiceTriggers();
   updateTimeControls();
 }
 
@@ -271,6 +359,7 @@ function showForm({ keepValues = false } = {}) {
   updateEventsEmpty();
   updateCalendarControls();
   updateTimeControls();
+  syncAllChoiceTriggers();
   formView.hidden = false;
   reportView.hidden = true;
   reportActions.hidden = true;
@@ -296,6 +385,8 @@ function addEventRow(eventData = {}) {
   const typeLabel = node("label", "field");
   typeLabel.append(node("span", "", "类型"));
   const typeSelect = node("select", "event-type");
+  typeSelect.dataset.choiceTitle = "选择经历类型";
+  typeSelect.setAttribute("aria-label", "经历类型");
   ["事业", "迁移", "关系", "子女", "财务", "健康", "亲属", "教育", "其他"].forEach((item) => {
     const option = node("option", "", item);
     option.value = item;
@@ -303,6 +394,7 @@ function addEventRow(eventData = {}) {
     typeSelect.append(option);
   });
   typeLabel.append(typeSelect);
+  enhanceSelect(typeSelect);
 
   const summaryLabel = node("label", "field event-summary");
   summaryLabel.append(node("span", "", "事件说明"));
@@ -398,6 +490,23 @@ function appendReportFacts(container, record) {
   container.append(facts);
 }
 
+function pickUniqueVisual(library, categoryNames, seed, usedSources) {
+  const categories = Array.isArray(categoryNames) ? categoryNames : [categoryNames];
+  for (let attempt = 0; attempt < library.entries.length; attempt += 1) {
+    const attemptSeed = `${seed}:unique:${attempt}`;
+    const visual = categories.length === 1
+      ? library.pick(categories[0], attemptSeed)
+      : library.pickAny(categories, attemptSeed);
+    if (!usedSources.has(visual.src)) {
+      usedSources.add(visual.src);
+      return visual;
+    }
+  }
+  const fallback = library.entries.find((entry) => categories.includes(entry.category) && !usedSources.has(entry.src));
+  if (fallback) usedSources.add(fallback.src);
+  return fallback || library.pick(categories[0], seed);
+}
+
 function renderReport(record) {
   formView.hidden = true;
   reportView.hidden = false;
@@ -408,11 +517,12 @@ function renderReport(record) {
   $("#pageTitle").textContent = record.report.title;
   const imageSeed = record.recordId || `${record.input.name}:${record.input.solarDate}:${record.report.generatedAt}`;
   const imageLibrary = globalThis.MingliImages;
+  const usedImageSources = new Set();
 
   const hero = $("#reportHero");
   hero.replaceChildren();
   if (imageLibrary) {
-    const heroVisual = imageLibrary.pickAny(["palace", "cosmos", "mountains", "elements"], `${imageSeed}:hero`);
+    const heroVisual = pickUniqueVisual(imageLibrary, ["palace", "cosmos", "mountains", "elements"], `${imageSeed}:hero`, usedImageSources);
     hero.style.setProperty("--report-hero-image", `url("${heroVisual.src}")`);
     hero.style.setProperty("--report-hero-position", heroVisual.position);
     hero.dataset.imageId = heroVisual.id;
@@ -600,7 +710,7 @@ function renderReport(record) {
     sectionNode.append(node("p", "report-summary", section.summary));
     const illustrationCategory = sectionIllustrationCategories[section.id];
     if (illustrationCategory && imageLibrary) {
-      const illustrationData = imageLibrary.pick(illustrationCategory, `${imageSeed}:${section.id}`);
+      const illustrationData = pickUniqueVisual(imageLibrary, illustrationCategory, `${imageSeed}:${section.id}`, usedImageSources);
       const figure = node("figure", "section-illustration");
       figure.dataset.imageId = illustrationData.id;
       figure.style.setProperty("--illustration-scale", illustrationData.scale);
@@ -696,13 +806,13 @@ $("#editReportButton").addEventListener("click", () => {
 });
 
 $("#addEventButton").addEventListener("click", () => addEventRow());
-$("#printButton").addEventListener("click", () => window.print());
 $("#deleteButton").addEventListener("click", deleteCurrentRecord);
 form.addEventListener("submit", submitReport);
 
 $$('input[name="calendarType"]').forEach((input) => input.addEventListener("change", updateCalendarControls));
 $$('input[name="timeMode"]').forEach((input) => input.addEventListener("change", updateTimeControls));
-$("#exactTime").addEventListener("input", updateTimeControls);
+$("#exactHour").addEventListener("change", updateTimeControls);
+$("#exactMinute").addEventListener("change", updateTimeControls);
 $("#timeBranch").addEventListener("change", updateTimeControls);
 $("#year").addEventListener("change", updateDayOptions);
 $("#month").addEventListener("change", updateDayOptions);
@@ -717,9 +827,16 @@ $("#historyToggle").addEventListener("click", () => {
   $("#sidebarScrim").hidden = false;
 });
 $("#sidebarScrim").addEventListener("click", closeSidebar);
+$("#choiceDialogClose").addEventListener("click", () => $("#choiceDialog").close());
+$("#choiceSearchInput").addEventListener("input", (event) => renderChoiceOptions(event.target.value));
+$("#choiceDialog").addEventListener("click", (event) => {
+  if (event.target === $("#choiceDialog")) $("#choiceDialog").close();
+});
 
 populateDateSelects();
+populateTimeSelects();
 updateCalendarControls();
 updateTimeControls();
+[$("#year"), $("#month"), $("#day"), $("#exactHour"), $("#exactMinute"), $("#timeBranch")].forEach(enhanceSelect);
 updateEventsEmpty();
 loadHistory();

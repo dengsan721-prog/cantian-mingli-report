@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f5ee" />
     <title>参天 · 命理综合研判</title>
-    <link rel="stylesheet" href="./styles.css?v=20260918-14" />
+    <link rel="stylesheet" href="./styles.css?v=20260918-15" />
   </head>
   <body>
     <div class="app-shell">
@@ -42,7 +42,6 @@
           </div>
           <div class="header-actions" id="reportActions" hidden>
             <button class="secondary-button" id="editReportButton" type="button">修改资料</button>
-            <button class="icon-button" id="printButton" type="button" aria-label="打印报告" title="打印报告">⎙</button>
             <button class="icon-button danger" id="deleteButton" type="button" aria-label="删除记录" title="删除记录">×</button>
           </div>
         </header>
@@ -85,19 +84,19 @@
               <div class="birth-date-grid">
                 <label class="field date-part">
                   <span class="sr-only">出生年份</span>
-                  <select id="year" name="year" required aria-label="出生年份">
+                  <select id="year" name="year" required aria-label="出生年份" data-choice-title="选择出生年份">
                     <option value="">年份</option>
                   </select>
                 </label>
                 <label class="field date-part">
                   <span class="sr-only">出生月份</span>
-                  <select id="month" name="month" required aria-label="出生月份">
+                  <select id="month" name="month" required aria-label="出生月份" data-choice-title="选择出生月份">
                     <option value="">月份</option>
                   </select>
                 </label>
                 <label class="field date-part">
                   <span class="sr-only">出生日期</span>
-                  <select id="day" name="day" required aria-label="出生日期">
+                  <select id="day" name="day" required aria-label="出生日期" data-choice-title="选择出生日期">
                     <option value="">日期</option>
                   </select>
                 </label>
@@ -119,11 +118,20 @@
                   <div class="time-choice-detail">
                     <label id="exactTimeField">
                       <span class="sr-only">准确出生时间</span>
-                      <input id="exactTime" type="time" aria-label="准确出生时间" />
+                      <span class="exact-time-selects">
+                        <select id="exactHour" aria-label="出生小时" data-choice-title="选择出生小时">
+                          <option value="">小时</option>
+                        </select>
+                        <i aria-hidden="true">:</i>
+                        <select id="exactMinute" aria-label="出生分钟" data-choice-title="选择出生分钟">
+                          <option value="">分钟</option>
+                        </select>
+                      </span>
+                      <input id="exactTime" type="hidden" />
                     </label>
                     <label id="branchTimeField" hidden>
                       <span class="sr-only">传统出生时辰</span>
-                      <select id="timeBranch" aria-label="传统出生时辰">
+                      <select id="timeBranch" aria-label="传统出生时辰" data-choice-title="选择传统时辰">
                         <option value="">选择十二时辰</option>
                         <option value="子时">子时 · 23:00—00:59</option>
                         <option value="丑时">丑时 · 01:00—02:59</option>
@@ -235,8 +243,24 @@
     </div>
 
     <div class="sidebar-scrim" id="sidebarScrim" hidden></div>
+    <dialog class="choice-dialog" id="choiceDialog" aria-labelledby="choiceDialogTitle">
+      <div class="choice-dialog-shell">
+        <header>
+          <div>
+            <small>参天 · 东方智慧</small>
+            <h2 id="choiceDialogTitle">请选择</h2>
+          </div>
+          <button class="choice-dialog-close" id="choiceDialogClose" type="button" aria-label="关闭选择页" title="关闭">×</button>
+        </header>
+        <label class="choice-dialog-search" id="choiceDialogSearch" hidden>
+          <span aria-hidden="true">⌕</span>
+          <input id="choiceSearchInput" type="search" placeholder="输入数字快速查找" autocomplete="off" />
+        </label>
+        <div class="choice-options" id="choiceOptions"></div>
+      </div>
+    </dialog>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-    <script src="./image-library.js?v=20260918-14"></script>
-    <script src="./app.js?v=20260918-14"></script>
+    <script src="./image-library.js?v=20260918-15"></script>
+    <script src="./app.js?v=20260918-15"></script>
   </body>
 </html>
