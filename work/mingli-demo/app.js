@@ -274,9 +274,8 @@ function showForm({ keepValues = false } = {}) {
   formView.hidden = false;
   reportView.hidden = true;
   reportActions.hidden = true;
-  $("#pageEyebrow").textContent = "命理研判";
-  $("#pageTitle").textContent = keepValues ? "核对出生资料" : "建立命盘";
-  $("#pageSubtitle").hidden = false;
+  $("#pageEyebrow").textContent = "参天·东方智慧命理研判";
+  $("#pageTitle").textContent = "建立命盘，信息越准，研判越稳";
   stageHeader.classList.add("form-mode");
   renderHistory();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -403,7 +402,6 @@ function renderReport(record) {
   reportView.hidden = false;
   reportActions.hidden = false;
   stageHeader.classList.remove("form-mode");
-  $("#pageSubtitle").hidden = true;
   $("#pageEyebrow").textContent = "命理综合研判";
   $("#pageTitle").textContent = record.report.title;
   const imageSeed = record.recordId || `${record.input.name}:${record.input.solarDate}:${record.report.generatedAt}`;

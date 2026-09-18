@@ -355,18 +355,6 @@ a:focus-visible {
   white-space: nowrap;
 }
 
-.stage-subtitle {
-  margin: 4px 0 0;
-  color: #69736f;
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-.stage-subtitle span {
-  margin-right: 4px;
-  color: var(--ritual-gold);
-}
-
 .stage-header.form-mode {
   border-bottom-color: rgba(177, 146, 79, 0.32);
   background-color: rgba(250, 249, 244, 0.96);
@@ -1954,6 +1942,11 @@ a:focus-visible {
   .stage-header h1 {
     max-width: calc(100vw - 144px);
     font-size: 18px;
+  }
+
+  .stage-header.form-mode h1 {
+    max-width: calc(100vw - 82px);
+    font-size: 16px;
   }
 
   .eyebrow {
