@@ -1,6 +1,8 @@
 {
   "database_name": "mingli_system_database",
-  "version": "1.0.0",
+  "version": "1.1.0",
+  "narrative_library": "wisdom_knowledge.json",
+  "narrative_library_status": "candidate: 需通过独立样本重复率与可读性验收后再替换正式生成器",
   "purpose": "理论规则库。将传统命理常用理法转化为可调用规则，用于生成报告、专家质询和案例纠偏。仅保存摘要与规则，不保存古籍长篇原文。",
   "theory_sources": [
     {
@@ -133,4 +135,3 @@
     }
   ]
 }
-

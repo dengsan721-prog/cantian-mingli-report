@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "seed": 20260920,
+  "sampleSize": 6,
+  "method": "random.Random(seed).sample(sorted(eligible_people, key=id), 6)，在生成报告前固定样本；不按测试结果更换样本。",
+  "scope": "人工收集的诺贝尔公开人物便利样本池内随机抽取；不代表人口总体。只录入公开生日与出生城市，未导入成就供事后拟合。",
+  "timezoneNote": "IANA时区为按城市配置的运行参数，未核实历史钟表时；无时辰计算不补时柱。",
+  "excluded": [
+    {
+      "name": "Abdulrazak Gurnah",
+      "source": "https://www.nobelprize.org/laureate/1004",
+      "reason": "该来源只提供1948年，未提供完整生日，不用猜测日期。"
+    }
+  ],
+  "people": [
+    {
+      "id": "malala",
+      "name": "Malala Yousafzai",
+      "gender": "female",
+      "birthDate": "1997-07-12",
+      "birthplace": "Mingora, Pakistan",
+      "timezone": "Asia/Karachi",
+      "source": "https://www.nobelprize.org/prizes/peace/2014/yousafzai/facts/",
+      "retrieved": "2026-09-20",
+      "birthTime": null,
+      "events": [],
+      "use": "叙事回归样本，非命理命中案例。"
+    },
+    {
+      "id": "han",
+      "name": "Han Kang",
+      "gender": "female",
+      "birthDate": "1970-11-27",
+      "birthplace": "Gwangju, South Korea",
+      "timezone": "Asia/Seoul",
+      "source": "https://www.nobelprize.org/laureate/1042",
+      "retrieved": "2026-09-20",
+      "birthTime": null,
+      "events": [],
+      "use": "叙事回归样本，非命理命中案例。"
+    },
+    {
+      "id": "duflo",
+      "name": "Esther Duflo",
+      "gender": "female",
+      "birthDate": "1972-10-25",
+      "birthplace": "Paris, France",
+      "timezone": "Europe/Paris",
+      "source": "https://www.nobelprize.org/laureate/983",
+      "retrieved": "2026-09-20",
+      "birthTime": null,
+      "events": [],
+      "use": "叙事回归样本，非命理命中案例。"
+    },
+    {
+      "id": "ishiguro",
+      "name": "Kazuo Ishiguro",
+      "gender": "male",
+      "birthDate": "1954-11-08",
+      "birthplace": "Nagasaki, Japan",
+      "timezone": "Asia/Tokyo",
+      "source": "https://www.nobelprize.org/uploads/2018/06/bio-bibl-15.pdf",
+      "retrieved": "2026-09-20",
+      "birthTime": null,
+      "events": [],
+      "use": "叙事回归样本，非命理命中案例。"
+    },
+    {
+      "id": "hassabis",
+      "name": "Demis Hassabis",
+      "gender": "male",
+      "birthDate": "1976-07-27",
+      "birthplace": "London, United Kingdom",
+      "timezone": "Europe/London",
+      "source": "https://www.nobelprize.org/laureate/1040",
+      "retrieved": "2026-09-20",
+      "birthTime": null,
+      "events": [],
+      "use": "叙事回归样本，非命理命中案例。"
+    },
+    {
+      "id": "ghez",
+      "name": "Andrea Ghez",
+      "gender": "female",
+      "birthDate": "1965-06-16",
+      "birthplace": "New York, USA",
+      "timezone": "America/New_York",
+      "source": "https://www.nobelprize.org/laureate/990",
+      "retrieved": "2026-09-20",
+      "birthTime": null,
+      "events": [],
+      "use": "叙事回归样本，非命理命中案例。"
+    },
+    {
+      "id": "yamanaka",
+      "name": "Shinya Yamanaka",
+      "gender": "male",
+      "birthDate": "1962-09-04",
+      "birthplace": "Osaka, Japan",
+      "timezone": "Asia/Tokyo",
+      "source": "https://www.nobelprize.org/laureate/875",
+      "retrieved": "2026-09-20",
+      "birthTime": null,
+      "events": [],
+      "use": "叙事回归样本，非命理命中案例。"
+    },
+    {
+      "id": "genzel",
+      "name": "Reinhard Genzel",
+      "gender": "male",
+      "birthDate": "1952-03-24",
+      "birthplace": "Bad Homburg, Germany",
+      "timezone": "Europe/Berlin",
+      "source": "https://www.nobelprize.org/laureate/989",
+      "retrieved": "2026-09-20",
+      "birthTime": null,
+      "events": [],
+      "use": "叙事回归样本，非命理命中案例。"
+    }
+  ]
+}

@@ -1898,7 +1898,8 @@ a:focus-visible {
 .report-content[data-read-mode="focused"] .technical-snapshot-panel,
 .report-content[data-read-mode="focused"] .technical-cue,
 .report-content[data-read-mode="focused"] .section-note,
-.report-content[data-read-mode="focused"] .report-story p:nth-child(n + 2) {
+.report-content[data-read-mode="focused"] .report-section > .report-story p:nth-child(n + 2),
+.report-content[data-read-mode="focused"] .report-arc + .report-arc {
   display: none;
 }
 
@@ -2402,6 +2403,55 @@ a:focus-visible {
   line-height: 1.92;
 }
 
+.report-arc {
+  padding: 16px 0;
+}
+
+.report-arc + .report-arc {
+  border-top: 1px solid rgba(76, 98, 121, 0.2);
+}
+
+.report-arc-label {
+  margin: 0 0 12px;
+  color: #536579;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.report-arc .report-story {
+  margin-bottom: 12px;
+}
+
+.report-arc-reflection {
+  margin: 0 0 14px;
+  color: #293b4b;
+  font-family: var(--report-display);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.8;
+}
+
+.report-arc-action {
+  margin: 0;
+  padding-left: 12px;
+  border-left: 2px solid #aa8954;
+  color: #3e4854;
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.report-arc-action strong {
+  margin-right: 8px;
+  color: #725629;
+  font-size: 12px;
+}
+
+.report-event-observation {
+  color: #3e4854;
+  font-size: 14px;
+  line-height: 1.85;
+}
+
 .deep-insight {
   position: relative;
   margin: 22px 0;
@@ -2431,6 +2481,12 @@ a:focus-visible {
   margin: 22px 0 24px;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.section-illustration-viewport {
+  overflow: hidden;
+  aspect-ratio: 16 / 7;
+  border-radius: 8px;
 }
 
 .section-illustration img {
@@ -2475,6 +2531,12 @@ a:focus-visible {
   background: #fafafa;
   font-size: 14px;
   line-height: 1.7;
+}
+
+.report-source-link {
+  color: var(--blue-hover);
+  text-underline-offset: 3px;
+  white-space: nowrap;
 }
 
 .report-section li::before {

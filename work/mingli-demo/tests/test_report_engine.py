@@ -12,9 +12,9 @@ DEMO_ROOT = Path(__file__).resolve().parents[1]
 if str(DEMO_ROOT) not in sys.path:
     sys.path.insert(0, str(DEMO_ROOT))
 
-from report_engine import generate_report, lunar_year_options, resolve_birthplace  # noqa: E402
+from report_engine import WISDOM_MODEL_VERSION, generate_report, lunar_year_options, resolve_birthplace  # noqa: E402
 from narrative_engine import narrative_similarity, narrative_text  # noqa: E402
-from server import delete_report, get_report, list_reports, save_report  # noqa: E402
+from server import DemoHandler, delete_report, get_report, list_reports, save_report  # noqa: E402
 
 
 def exact_payload() -> dict[str, object]:
@@ -37,6 +37,10 @@ def exact_payload() -> dict[str, object]:
 
 
 class ReportEngineTests(unittest.TestCase):
+    def test_wisdom_report_is_the_formal_server_default(self) -> None:
+        self.assertEqual(WISDOM_MODEL_VERSION, "wisdom-report-v86")
+        self.assertTrue(DemoHandler.use_wisdom)
+
     def test_lunar_date_is_converted_before_chart_calculation(self) -> None:
         payload = exact_payload()
         payload.update({

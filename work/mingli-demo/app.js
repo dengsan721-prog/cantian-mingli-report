@@ -799,8 +799,8 @@ function appendPersonalityAxes(container, profile) {
   const panel = node("section", "personality-axes");
   const heading = node("div", "personality-axes-heading");
   heading.append(
-    node("span", "", "四维性格侧写"),
-    node("small", "", `${profile.lifeStage?.name || "人生阶段"} · 从偏好看见行为路径`)
+    node("span", "", profile.audience === "youth" ? "成长支持的四个方向" : "四维观察线索"),
+    node("small", "", `${profile.lifeStage?.name || "人生阶段"} · ${profile.audience === "youth" ? "以真实发展与感受为准" : "传统解释，留待生活核对"}`)
   );
   panel.append(heading);
   const grid = node("div", "personality-axes-grid");
@@ -876,6 +876,9 @@ function appendTechnicalSnapshot(container, record) {
   const summary = node("summary");
   summary.append(node("strong", "", "专业计算底稿"), node("span", "", `模型 ${record.report.modelVersion || record.modelVersion || "legacy"}`));
   panel.append(summary);
+  if (record.report.narrativeProfile?.referenceDate) {
+    panel.append(node("p", "", `年龄与阶段参照日：${record.report.narrativeProfile.referenceDate}。同一模型版本沿用该日期，生成时间另列。`));
+  }
   const grid = node("div", "technical-snapshot-grid");
   const rows = [
     ["四柱", (record.chart.pillars || []).join(" · ")],
@@ -933,6 +936,9 @@ function renderReport(record) {
   const heroInner = node("div", "report-hero-inner");
   const status = node("div", "report-status-row");
   status.append(node("span", "", `${reportDisplayText(record.quality.maxReportLevel) || "命理综合报告"} · ${formatDateTime(record.report.generatedAt)}`));
+  if (record.report.narrativeProfile?.referenceDate) {
+    status.append(node("span", "", `阶段参照 ${record.report.narrativeProfile.referenceDate}`));
+  }
   heroInner.append(status, node("h2", "", record.report.title));
   heroInner.append(node("p", "", "这不是给人生下定义，而是借一张传统命盘，陪你重新看看自己的性情、关系与选择。"));
   appendPillars(heroInner, record.chart.pillars || [], record.chart.trueSolarVariant);
@@ -1125,9 +1131,10 @@ function renderReport(record) {
 
     const sectionNode = node("section", "report-section");
     sectionNode.id = `report-${section.id}`;
+    const pairedArcs = section.narrativeLayout === "paired_arcs";
     sectionNode.append(node("span", "report-section-number", String(sectionIndex + 1).padStart(2, "0")));
     sectionNode.append(node("h3", "", section.title));
-    sectionNode.append(node("p", "report-summary", section.summary));
+    if (!pairedArcs && section.summary) sectionNode.append(node("p", "report-summary", section.summary));
     const illustrationCategory = sectionIllustrationCategories[section.id];
     if (illustrationCategory && imageLibrary) {
       const illustrationData = pickUniqueVisual(imageLibrary, illustrationCategory, `${imageSeed}:${section.id}`, usedImageSources);
@@ -1140,7 +1147,9 @@ function renderReport(record) {
       image.loading = "lazy";
       image.style.objectPosition = illustrationData.position;
       image.style.filter = `saturate(${illustrationData.saturation}) brightness(${illustrationData.brightness})`;
-      figure.append(image, node("figcaption", "", illustrationData.caption));
+      const viewport = node("div", "section-illustration-viewport");
+      viewport.append(image);
+      figure.append(viewport, node("figcaption", "", illustrationData.caption));
       sectionNode.append(figure);
     }
     if (section.technical) {
@@ -1148,20 +1157,45 @@ function renderReport(record) {
       technical.append(node("strong", "", "专业线索"), document.createTextNode(reportDisplayText(section.technical)));
       sectionNode.append(technical);
     }
-    if (section.scenes?.length) {
+    if (pairedArcs) {
+      (section.narrativeArcOrder || [0, 1]).forEach((arcIndex, displayIndex) => {
+        const reflection = [section.summary, section.insight][arcIndex];
+        const arc = node("article", "report-arc");
+        arc.append(node("h4", "report-arc-label", displayIndex === 0 ? "情境一" : "情境二"));
+        const story = node("div", "report-story");
+        section.scenes.slice(arcIndex * 2, arcIndex * 2 + 2).forEach((paragraph) => story.append(node("p", "", paragraph)));
+        arc.append(story, node("p", "report-arc-reflection", reflection));
+        const action = node("p", "report-arc-action");
+        action.append(node("strong", "", "试一步"), document.createTextNode(section.items[arcIndex]));
+        arc.append(action);
+        sectionNode.append(arc);
+      });
+      // Attributed user events follow the examples and must stay visible in both reading modes.
+      section.scenes.slice(4).forEach((paragraph) => sectionNode.append(node("p", "report-event-observation", paragraph)));
+    } else if (section.scenes?.length) {
       const story = node("div", "report-story");
       section.scenes.forEach((paragraph) => story.append(node("p", "", paragraph)));
       sectionNode.append(story);
     }
-    if (section.insight) {
+    if (!pairedArcs && section.insight) {
       const insight = node("aside", "deep-insight");
       insight.append(node("span", "", "深层洞见"), node("p", "", section.insight));
       sectionNode.append(insight);
     }
-    if (section.items?.length) {
+    if (!pairedArcs && section.items?.length) {
       if (section.listTitle) sectionNode.append(node("p", "report-list-title", section.listTitle));
       const list = node("ul");
-      section.items.forEach((item) => list.append(node("li", "", item)));
+      section.items.forEach((item, itemIndex) => {
+        const entry = node("li", "", item);
+        const sourceId = section.narrativeEvidence?.linkedActions?.[itemIndex]?.sectionId;
+        if (sourceId && record.report.sections.some((source) => source.id === sourceId && source.id !== section.id)) {
+          const sourceLink = node("a", "report-source-link", "回看前文");
+          sourceLink.href = `#report-${sourceId}`;
+          sourceLink.addEventListener("click", () => setReadMode("full"));
+          entry.append(document.createTextNode(" "), sourceLink);
+        }
+        list.append(entry);
+      });
       sectionNode.append(list);
     }
     if (section.note) {

@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "seed": 20260920,
+  "sampleSize": 4,
+  "method": "冻结四人全量测试，不按报告结果替换人物。两人为开发抽样时预留，另两人来自首次测试前核验的官方出生资料。",
+  "scope": "便利资料池的独立人物留出组，不代表总体随机抽样。没有出生时刻；时区仅作程序参数，不声称核验历史时制；不输入职业成就或已知人生结果。首次运行后仅作回归组，后续泛化需新盲测。",
+  "people": [
+    {
+      "id": "malala",
+      "name": "Malala Yousafzai",
+      "gender": "female",
+      "birthDate": "1997-07-12",
+      "birthplace": "Mingora, Pakistan",
+      "timezone": "Asia/Karachi",
+      "source": "https://www.nobelprize.org/prizes/peace/2014/yousafzai/facts/",
+      "retrieved": "2026-09-20",
+      "birthTime": null,
+      "events": [],
+      "use": "叙事回归样本，非命理命中案例。"
+    },
+    {
+      "id": "yamanaka",
+      "name": "Shinya Yamanaka",
+      "gender": "male",
+      "birthDate": "1962-09-04",
+      "birthplace": "Osaka, Japan",
+      "timezone": "Asia/Tokyo",
+      "source": "https://www.nobelprize.org/laureate/875",
+      "retrieved": "2026-09-20",
+      "birthTime": null,
+      "events": [],
+      "use": "叙事回归样本，非命理命中案例。"
+    },
+    {
+      "id": "charpentier",
+      "name": "Emmanuelle Charpentier",
+      "gender": "female",
+      "birthDate": "1968-12-11",
+      "birthplace": "Juvisy-sur-Orge, France",
+      "timezone": "Europe/Paris",
+      "birthTime": null,
+      "events": [],
+      "source": "https://www.nobelprize.org/prizes/chemistry/2020/charpentier/facts/",
+      "retrieved": "2026-09-20"
+    },
+    {
+      "id": "alexievich",
+      "name": "Svetlana Alexievich",
+      "gender": "female",
+      "birthDate": "1948-05-31",
+      "birthplace": "Ivano-Frankivsk, Ukraine",
+      "timezone": "Europe/Kyiv",
+      "birthTime": null,
+      "events": [],
+      "source": "https://www.nobelprize.org/prizes/literature/2015/bio-bibliography/",
+      "retrieved": "2026-09-20"
+    }
+  ]
+}

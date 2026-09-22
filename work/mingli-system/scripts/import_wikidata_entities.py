@@ -133,15 +133,22 @@ def claim_time(entity: dict[str, Any], prop: str) -> str | None:
         return None
     value = values[0]
     if isinstance(value, dict):
-        return normalize_wikidata_time(value.get("time"))
+        return normalize_wikidata_time(value.get("time"), value.get("precision"))
     return None
 
 
-def normalize_wikidata_time(value: str | None) -> str | None:
-    if not value:
+def normalize_wikidata_time(value: str | None, precision: int | None = None) -> str | None:
+    if not value or precision is None or precision < 9:
         return None
     clean = value.lstrip("+")
-    return clean.replace("T00:00:00Z", "")
+    calendar_date = clean.split("T", 1)[0]
+    year, month, day = calendar_date.rsplit("-", 2)
+    # Wikidata may encode a year-only value with January 1 as its placeholder.
+    if precision == 9:
+        return f"{year}-00-00"
+    if precision == 10:
+        return f"{year}-{month}-00"
+    return calendar_date
 
 
 def claim_item_ids(entity: dict[str, Any], prop: str) -> list[str]:
@@ -158,7 +165,7 @@ def qualifier_time(statement: dict[str, Any], *properties: str) -> str | None:
         for qualifier in qualifiers.get(prop, []):
             value = qualifier.get("datavalue", {}).get("value")
             if isinstance(value, dict):
-                normalized = normalize_wikidata_time(value.get("time"))
+                normalized = normalize_wikidata_time(value.get("time"), value.get("precision"))
                 if normalized:
                     return normalized
     return None

@@ -20,11 +20,14 @@ sys.path.insert(0, str(ROOT))
 
 from report_engine import (  # noqa: E402
     MODEL_VERSION,
+    WISDOM_MODEL_VERSION,
     dumps,
     generate_report,
     lunar_year_options,
+    normalize_input,
     resolve_birthplace,
 )
+from narrative_diversity import body_text  # noqa: E402
 
 
 DEFAULT_DB = ROOT / "data" / "demo_records.db"
@@ -32,7 +35,7 @@ DEFAULT_DB = ROOT / "data" / "demo_records.db"
 
 def connect(db_path: Path) -> sqlite3.Connection:
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path, timeout=60)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     conn.execute("PRAGMA journal_mode = WAL")
@@ -95,68 +98,95 @@ def report_fingerprint(input_data: dict[str, object]) -> str:
     return hashlib.sha256(stable.encode("utf-8")).hexdigest()
 
 
-def save_report(db_path: Path, generated: dict[str, object]) -> dict[str, object]:
+def _record_from_row(row: sqlite3.Row) -> dict[str, object]:
+    return {
+        "recordId": row["record_id"], "createdAt": row["created_at"],
+        "inputFingerprint": row["input_fingerprint"], "modelVersion": row["model_version"],
+        **{key: json.loads(row[f"{key}_json"]) for key in ("input", "chart", "quality", "rectification", "report")},
+    }
+
+
+def save_report(db_path: Path, generated: dict[str, object], *,
+                connection: sqlite3.Connection | None = None) -> dict[str, object]:
     input_data = generated["input"]
     quality = generated["quality"]
-    assert isinstance(input_data, dict) and isinstance(quality, dict)
     fingerprint = report_fingerprint(input_data)
     model_version = str(generated.get("report", {}).get("modelVersion") or MODEL_VERSION)
-    conn = connect(db_path)
-    existing = conn.execute(
-        "SELECT record_id FROM report_records WHERE input_fingerprint = ? AND model_version = ? "
-        "ORDER BY created_at DESC LIMIT 1",
-        (fingerprint, model_version),
-    ).fetchone()
-    conn.close()
-    if existing:
-        record = get_report(db_path, existing["record_id"])
-        assert record is not None
-        return {**record, "reused": True}
+    conn = connection or connect(db_path)
+    owns_connection = connection is None
+    try:
+        if owns_connection:
+            conn.execute("BEGIN IMMEDIATE")
+        existing = conn.execute(
+            "SELECT * FROM report_records WHERE input_fingerprint = ? AND model_version = ? "
+            "ORDER BY created_at DESC LIMIT 1", (fingerprint, model_version),
+        ).fetchone()
+        if existing:
+            return {**_record_from_row(existing), "reused": True}
+        record_id = uuid.uuid4().hex
+        now = datetime.now().astimezone().isoformat(timespec="seconds")
+        birth_date_text = f"{input_data['calendarType']} {input_data['year']}-{input_data['month']}-{input_data['day']}"
+        conn.execute(
+            """INSERT INTO report_records (
+                record_id, name, gender, birth_date_text, birthplace,
+                quality_level, max_report_level, input_json, chart_json,
+                quality_json, rectification_json, report_json, created_at, updated_at,
+                input_fingerprint, model_version
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (record_id, input_data["name"], input_data["gender"], birth_date_text, input_data["birthplace"],
+             quality["level"], quality["maxReportLevel"], dumps(input_data), dumps(generated["chart"]),
+             dumps(quality), dumps(generated["rectification"]), dumps(generated["report"]), now, now,
+             fingerprint, model_version),
+        )
+        if owns_connection:
+            conn.commit()
+        return {"recordId": record_id, "createdAt": now, "inputFingerprint": fingerprint,
+                "modelVersion": model_version, "reused": False, **generated}
+    except Exception:
+        if owns_connection:
+            conn.rollback()
+        raise
+    finally:
+        if owns_connection:
+            conn.close()
 
-    record_id = uuid.uuid4().hex
-    now = datetime.now().astimezone().isoformat(timespec="seconds")
-    birth_date_text = f"{input_data['calendarType']} {input_data['year']}-{input_data['month']}-{input_data['day']}"
+
+def narrative_fingerprint(input_data: dict[str, object]) -> str:
+    return report_fingerprint({**input_data, "name": None})
+
+
+def generate_and_save_report(db_path: Path, payload: dict[str, object], *, use_wisdom: bool = False) -> dict[str, object]:
+    if not use_wisdom:
+        return save_report(db_path, generate_report(payload))
+    data = normalize_input(payload)
+    fingerprint = report_fingerprint(data)
+    identity = narrative_fingerprint(data)
     conn = connect(db_path)
     try:
-        conn.execute(
-            """
-            INSERT INTO report_records (
-              record_id, name, gender, birth_date_text, birthplace,
-              quality_level, max_report_level, input_json, chart_json,
-              quality_json, rectification_json, report_json, created_at, updated_at,
-              input_fingerprint, model_version
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                record_id,
-                input_data["name"],
-                input_data["gender"],
-                birth_date_text,
-                input_data["birthplace"],
-                quality["level"],
-                quality["maxReportLevel"],
-                dumps(input_data),
-                dumps(generated["chart"]),
-                dumps(quality),
-                dumps(generated["rectification"]),
-                dumps(generated["report"]),
-                now,
-                now,
-                fingerprint,
-                model_version,
-            ),
-        )
+        # Audit and save atomically; existing history cannot change the canonical draft.
+        conn.execute("BEGIN IMMEDIATE")
+        existing = conn.execute(
+            "SELECT * FROM report_records WHERE input_fingerprint = ? AND model_version = ? "
+            "ORDER BY created_at DESC LIMIT 1", (fingerprint, WISDOM_MODEL_VERSION),
+        ).fetchone()
+        if existing:
+            return {**_record_from_row(existing), "reused": True}
+        references = []
+        for row in conn.execute("SELECT input_json, report_json, model_version FROM report_records ORDER BY created_at, record_id"):
+            prior_input, prior = json.loads(row["input_json"]), json.loads(row["report_json"])
+            if narrative_fingerprint(prior_input) == identity:
+                continue
+            text = body_text(prior["sections"])
+            references.append(text.replace(str(prior_input["name"]), "[姓名]"))
+        generated = generate_report(payload, use_wisdom=True, narrative_references=references)
+        saved = save_report(db_path, generated, connection=conn)
         conn.commit()
+        return saved
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
-    return {
-        "recordId": record_id,
-        "createdAt": now,
-        "inputFingerprint": fingerprint,
-        "modelVersion": model_version,
-        "reused": False,
-        **generated,
-    }
 
 
 def list_reports(db_path: Path, query: str = "") -> list[dict[str, object]]:
@@ -226,6 +256,7 @@ def delete_report(db_path: Path, record_id: str) -> bool:
 
 class DemoHandler(SimpleHTTPRequestHandler):
     db_path = DEFAULT_DB
+    use_wisdom = True
 
     def __init__(self, *args: object, **kwargs: object) -> None:
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -283,7 +314,7 @@ class DemoHandler(SimpleHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length).decode("utf-8"))
-            self.send_json(save_report(self.db_path, generate_report(payload)), HTTPStatus.CREATED)
+            self.send_json(generate_and_save_report(self.db_path, payload, use_wisdom=self.use_wisdom), HTTPStatus.CREATED)
         except (ValueError, KeyError, json.JSONDecodeError) as exc:
             self.send_json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
         except Exception as exc:
@@ -306,8 +337,11 @@ def main() -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--db", type=Path, default=DEFAULT_DB)
+    parser.add_argument("--wisdom-candidate", action="store_true", help="Accepted for compatibility; the wisdom report is now the default")
+    parser.add_argument("--legacy-report", action="store_true", help="Use the legacy mingli-report-v3 generator")
     args = parser.parse_args()
     DemoHandler.db_path = args.db
+    DemoHandler.use_wisdom = not args.legacy_report
     connect(args.db).close()
     server = ThreadingHTTPServer((args.host, args.port), DemoHandler)
     print(f"Mingli demo: http://{args.host}:{args.port}", flush=True)

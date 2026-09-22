@@ -6,6 +6,9 @@ import re
 from datetime import datetime
 from typing import Any
 
+from wisdom_narrative import NARRATIVE_REFERENCE_DATE, render_followthrough, render_wisdom_section
+from narrative_diversity import validate_draft
+
 
 YANG_STEMS = set("甲丙戊庚壬")
 
@@ -71,12 +74,16 @@ def _individualize(text: str, seed: str, key: str, *, lead: bool = False) -> str
     return result
 
 
-def _ten_god_axis(ten_gods: list[str]) -> tuple[str, str]:
-    counts = {
-        family: sum(any(marker in god for marker in markers) for god in ten_gods)
-        for family, markers in TEN_GOD_FAMILIES.items()
-    }
+def _ten_god_axis(ten_gods: list[str], *, exact: bool = False) -> tuple[str, str]:
+    markers_by_family = {
+        "自主驱动": ("比肩", "劫财"), "表达创造": ("食神", "伤官"),
+        "资源经营": ("正财", "偏财"), "规则责任": ("正官", "七杀"), "学习内化": ("正印", "偏印"),
+    } if exact else TEN_GOD_FAMILIES
+    counts = {family: sum(any(marker == god if exact else marker in god for marker in markers) for god in ten_gods)
+              for family, markers in markers_by_family.items()}
     family = max(counts, key=lambda item: (counts[item], item)) if any(counts.values()) else "综合承接"
+    if exact and sum(count == max(counts.values()) for count in counts.values()) > 1:
+        family = "综合承接"
     descriptions = {
         "自主驱动": "遇事先确认自己能掌握什么，再决定是否与人并肩",
         "表达创造": "通过说清、做出和展示成果来确认价值",
@@ -88,8 +95,8 @@ def _ten_god_axis(ten_gods: list[str]) -> tuple[str, str]:
     return family, descriptions[family]
 
 
-def _life_stage(year: int) -> tuple[str, str]:
-    age = max(0, datetime.now().year - year)
+def _life_stage(year: int, *, age: int | None = None) -> tuple[str, str]:
+    age = max(0, datetime.now().year - year) if age is None else age
     if age < 13:
         return "成长奠基期", "养育方式、学习兴趣与安全感"
     if age < 25:
@@ -107,9 +114,10 @@ def build_personality_axes(
     weakest: str,
     ten_gods: list[str],
     relation_text: str,
+    *, exact_families: bool = False,
 ) -> list[dict[str, str]]:
     day_stem = str(chart.get("day_master") or "")[0:1]
-    family, family_description = _ten_god_axis(ten_gods)
+    family, family_description = _ten_god_axis(ten_gods, exact=exact_families)
     has_clash = "冲" in relation_text or "刑" in relation_text
     has_combine = "合" in relation_text
     return [
@@ -346,19 +354,25 @@ def build_personalized_narrative(
     quality: dict[str, Any],
     hour_boundary: str,
     pillars: list[str],
+    use_wisdom: bool = False,
+    narrative_references: list[str] | None = None,
 ) -> dict[str, Any]:
     seed_payload = {
-        "name": data["name"],
         "gender": data["gender"],
         "solarDate": data["solarDate"],
         "timeText": data["timeText"],
-        "birthplace": data["birthplace"],
+        "birthplace": (data.get("resolvedPlace") or data["birthplace"]) if use_wisdom else data["birthplace"],
         "pillars": pillars,
         "events": data["events"],
     }
+    if not use_wisdom:
+        seed_payload["name"] = data["name"]
     seed = hashlib.sha256(json.dumps(seed_payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
-    axes = build_personality_axes(chart, strongest, weakest, ten_gods, relation_text)
-    stage_name, stage_focus = _life_stage(int(data["solarDate"][:4]))
+    axis_gods = [god for tag in chart["ten_god_tags"] for god in ([tag.get("stem")] + list(tag.get("branches") or [])) if god and god != "日主"] if use_wisdom else ten_gods
+    axes = build_personality_axes(chart, strongest, weakest, axis_gods, relation_text, exact_families=use_wisdom)
+    reference = datetime.fromisoformat(NARRATIVE_REFERENCE_DATE) if use_wisdom else datetime.now()
+    report_age = reference.year - int(data["solarDate"][:4]) - (reference.strftime("%m-%d") < data["solarDate"][5:])
+    stage_name, stage_focus = _life_stage(int(data["solarDate"][:4]), age=report_age if use_wisdom else None)
     stage_narrative = {
         "成长奠基期": "这一阶段先不急着把孩子定型。比起预判一生，更值得观察什么环境能唤起兴趣、什么沟通能建立安全感，以及挫折以后能否重新回到尝试之中。",
         "身份探索期": "这一阶段会同时遇到离开熟悉评价、选择学习方向和建立自我边界。报告应帮助本人分清哪些期待来自内心，哪些只是暂时借用了家人或同伴的声音。",
@@ -366,7 +380,7 @@ def build_personalized_narrative(
         "结构重整期": "这一阶段关注的已不只是继续向前，而是重新配置时间、体力与责任。能够沉淀的方法要留下，长期消耗却没有回报的角色，则需要被重新协商。",
         "经验回收期": "这一阶段更适合把生活从扩张转向取舍：哪些经验值得传给下一代，哪些责任可以交还，怎样让资产、关系与身体节律共同服务于生活质量。",
     }[stage_name]
-    family, family_description = _ten_god_axis(ten_gods)
+    family, family_description = _ten_god_axis(axis_gods, exact=use_wisdom)
     event_descriptions = [f"{event['date']} {event['type']}：{event['summary']}" for event in data["events"][:3]]
     event_line = "；".join(event_descriptions) if event_descriptions else event_context
     element_line = "，".join(f"{key}{value}" for key, value in elements.items())
@@ -423,7 +437,7 @@ def build_personalized_narrative(
             "meaning": "很多所谓性格问题，其实是一个人长期使用最擅长的方法保护自己",
             "settings": ["会议里出现一段无人回应的沉默", "亲近的人忽然情绪低落", "自己的意见被误解", "承诺快到期限却仍有变数", "需要拒绝一个熟人的请求", "辛苦完成的事没有被看见"],
             "actions": [f"稳定状态：{profile['strength']}。", f"压力信号：{profile['risk']}。", f"恢复入口：{profile['restore']}。", f"决策练习：{profile['practice']}。", "重要沟通先说担心的后果，再给出结论。"],
-            "boundary": "性格章节描述的是高频倾向，应以本人长期行为和身边人的稳定反馈复核。",
+            "boundary": "本章以传统象意提供自我观察的假设，不是统计结论；请用真实行为判断哪些适用。" if use_wisdom else "性格章节描述的是高频倾向，应以本人长期行为和身边人的稳定反馈复核。",
         },
         {
             "id": "career", "title": "事业：什么样的路更容易走出成绩", "listTitle": "适合积累职业资本的条件",
@@ -465,7 +479,7 @@ def build_personalized_narrative(
             "meaning": "人生转弯前经常先出现旧身份已经无法承接新需要的感觉",
             "settings": ["原本稳定的安排突然不再合身", "机会与压力在同一时间到来", "一次搬迁或岗位变化改变了生活半径", "关系中的角色需要重新协商", "过去擅长的方法开始失效", "心里反复出现想换一种活法的念头"],
             "actions": ["确认新责任是否带来相应权限和资源。", "区分这次选择是在逃离情绪，还是靠近长期目标。", "三个月后复盘身心、关系和现金流。", current_luck, f"已知经历线索：{event_line}"],
-            "boundary": "大运提供十年背景，不把某一年写成必然事件；用户经历只用于复核，不用于事后凑解释。",
+            "boundary": "传统时间线是文化解释，不是已验证的事件预测；你提供的经历用于组织表达和回看，不能作为预测命中的证据。" if use_wisdom else "大运提供十年背景，不把某一年写成必然事件；用户经历只用于复核，不用于事后凑解释。",
         },
         {
             "id": "wellbeing", "title": "身心节律：什么时候最需要照顾自己", "listTitle": "适合长期坚持的恢复安排",
@@ -531,8 +545,14 @@ def build_personalized_narrative(
     ]
     remaining.sort(key=lambda section_id: hashlib.sha256(f"{seed}|chapter-order|{section_id}".encode("utf-8")).hexdigest())
     chapter_order = ["portrait", *priority, *remaining, "actions"]
+    if use_wisdom and report_age >= 18:
+        # Understand the response pattern, explore life domains, then review and act.
+        domains = [section_id for section_id in [*priority, "career", "wealth", "relationships", "turning-points", "wellbeing"]
+                   if section_id not in {"portrait", "structure", "character", "review", "actions"}]
+        chapter_order = ["portrait", "structure", "character", *dict.fromkeys(domains), "review", "actions"]
 
     sections = []
+    wisdom_contexts = []
     for section_id in chapter_order:
         context = context_by_id[section_id]
         context = {
@@ -546,29 +566,64 @@ def build_personalized_narrative(
             "axisDecision": axes[1]["value"],
             "axisDrive": axes[2]["value"],
             "axisPace": axes[3]["value"],
+            "age": report_age,
+            "events": data["events"],
         }
-        scenes, voice = _compose_scenes(seed, context["id"], context)
+        if use_wisdom:
+            wisdom_contexts.append(context)
+            continue
+        else:
+            scenes, voice = _compose_scenes(seed, context["id"], context)
+            story = {
+                "title": context["title"],
+                "summary": _section_summary(seed, context["id"], context),
+                "scenes": scenes,
+                "listTitle": context["listTitle"],
+                "items": [
+                    _individualize(item, seed, f"{context['id']}:item:{index}")
+                    for index, item in enumerate(_ordered_sample(seed, f"{context['id']}:actions", list(context["actions"]), min(4, len(context["actions"]))))
+                ],
+                "note": _section_note(seed, context["id"], context["boundary"]),
+                "insight": _section_insight(seed, context["id"], context),
+                "narrativeVoice": voice,
+            }
         sections.append({
             "id": context["id"],
-            "title": context["title"],
-            "summary": _section_summary(seed, context["id"], context),
-            "scenes": scenes,
-            "listTitle": context["listTitle"],
-            "items": [
-                _individualize(item, seed, f"{context['id']}:item:{index}")
-                for index, item in enumerate(_ordered_sample(seed, f"{context['id']}:actions", list(context["actions"]), min(4, len(context["actions"]))))
-            ],
-            "note": _section_note(seed, context["id"], context["boundary"]),
-            "insight": _section_insight(seed, context["id"], context),
-            "narrativeVoice": voice,
+            "note": context["boundary"],
+            **story,
         })
 
+    audit = None
+    if use_wisdom:
+        used_groups = set()
+        for context in wisdom_contexts:
+            if context["id"] == "actions" and report_age >= 18:
+                story = render_followthrough(sections, priority)
+            else:
+                story = render_wisdom_section(seed, context, used_groups=used_groups)
+            sections.append({"id": context["id"], "note": context["boundary"], **story})
+            contrast = story["narrativeEvidence"]["selectionBasis"].get("reportContrast", {})
+            used_groups.update(contrast.get("selectedGroups", []))
+        audit = validate_draft(sections, narrative_references or [])
+
+    audience = "youth" if wisdom_contexts and wisdom_contexts[0]["age"] < 18 else "adult"
+    if use_wisdom and audience == "youth":
+        axes = [
+            {"name": "兴趣入口", "value": "允许探索", "description": "留意孩子愿意再次尝试的活动，不由出生信息指定天赋或职业。"},
+            {"name": "学习方式", "value": "寻找合适方法", "description": "观察示范、讲解与实际操作分别在哪些任务里有帮助。"},
+            {"name": "支持关系", "value": "保留求助通道", "description": "让孩子知道可以向谁表达需要，不把成人责任转给孩子。"},
+            {"name": "生活节律", "value": "照顾真实状态", "description": "依据实际发展与感受安排学习、玩耍和休息。"},
+        ]
+
     return {
-        "seedVersion": "composite-narrative-v1",
+        "seedVersion": "wisdom-narrative-v86" if use_wisdom else "composite-narrative-v1",
+        "referenceDate": NARRATIVE_REFERENCE_DATE if use_wisdom else None,
         "lifeStage": {"name": stage_name, "focus": stage_focus},
         "axes": axes,
         "chapterOrder": chapter_order,
         "sections": sections,
+        "diversityAudit": audit,
+        "audience": audience,
     }
 
 
@@ -588,4 +643,7 @@ def narrative_similarity(report_a: dict[str, Any], report_b: dict[str, Any], wid
     right = shingles(narrative_text(report_b))
     if not left and not right:
         return 1.0
-    return len(left & right) / max(1, len(left | right))
+    if len(left) > len(right):
+        left, right = right, left
+    overlap = sum(fragment in right for fragment in left)
+    return overlap / (len(left) + len(right) - overlap)

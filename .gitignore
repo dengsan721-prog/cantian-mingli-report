@@ -5,5 +5,9 @@ work/mingli-system/data/exports/
 work/mingli-system/data/cache/
 work/mingli-system/data/*.db-wal
 work/mingli-system/data/*.db-shm
+work/mingli-system/evaluations/
 __pycache__/
 */__pycache__/
+work/mingli-system/evaluations/runtime-preview*.db*
+work/mingli-system/evaluations/runtime-preview*.log
+work/mingli-system/evaluations/runtime-preview/

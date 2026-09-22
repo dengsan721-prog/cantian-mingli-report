@@ -13,6 +13,7 @@ from typing import Any
 from lunar_python import Lunar, LunarYear, Solar
 
 from narrative_engine import build_personalized_narrative
+from wisdom_narrative import NARRATIVE_REFERENCE_DATE
 
 
 ROOT = Path(__file__).resolve().parent
@@ -63,6 +64,7 @@ EVENT_TEN_GOD_HINTS = {
 }
 
 MODEL_VERSION = "mingli-report-v3"
+WISDOM_MODEL_VERSION = "wisdom-report-v86"
 
 PLACE_PRESETS = (
     {
@@ -652,7 +654,7 @@ def true_solar_variant(data: dict[str, Any], chart: dict[str, Any]) -> dict[str,
     }
 
 
-def luck_cycle_summary(data: dict[str, Any]) -> dict[str, Any] | None:
+def luck_cycle_summary(data: dict[str, Any], *, reference_year: int | None = None) -> dict[str, Any] | None:
     if data["gender"] not in {"male", "female"}:
         return None
     calculate_chart, parse_time, _ = _system_imports()
@@ -670,7 +672,7 @@ def luck_cycle_summary(data: dict[str, Any]) -> dict[str, Any] | None:
         for item in yun.getDaYun()
         if item.getGanZhi()
     ][:8]
-    current_year = datetime.now().year
+    current_year = datetime.now().year if reference_year is None else reference_year
     current = next(
         (item for item in cycles if item["startYear"] <= current_year <= item["endYear"]),
         None,
@@ -842,8 +844,11 @@ def rectification_candidates(data: dict[str, Any], quality: dict[str, Any]) -> d
     }
 
 
-def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
+def generate_report(payload: dict[str, Any], *, use_wisdom: bool = False,
+                    narrative_references: list[str] | None = None) -> dict[str, Any]:
     data = normalize_input(payload)
+    if use_wisdom and data["solarDate"] > NARRATIVE_REFERENCE_DATE:
+        raise ValueError(f"出生日期晚于本模型参照日 {NARRATIVE_REFERENCE_DATE}，请使用涵盖该日期的新版本。")
     foundation = load_knowledge_foundation()
     calculate_chart, _, _ = _system_imports()
     chart = calculate_chart(data["solarDate"], data["timeText"], data["timePrecision"])
@@ -851,7 +856,7 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("无法根据当前资料完成排盘")
     quality = quality_assessment(data)
     solar_variant = true_solar_variant(data, chart)
-    luck_cycles = luck_cycle_summary(data)
+    luck_cycles = luck_cycle_summary(data, reference_year=int(NARRATIVE_REFERENCE_DATE[:4]) if use_wisdom else None)
     elements = element_counts(chart)
     strongest = max(elements, key=elements.get)
     weakest = min(elements, key=elements.get)
@@ -887,7 +892,7 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
         hour_boundary = "时辰未知，子女、晚景、精确应期等涉及时柱的内容不作确定结论。"
 
     theme_signals: list[str] = []
-    if any("财" in item for item in ten_gods):
+    if any(item in {"正财", "偏财"} if use_wisdom else "财" in item for item in ten_gods):
         theme_signals.append("资源、收入与现实责任")
     if any("官" in item or "杀" in item for item in ten_gods):
         theme_signals.append("规则、职位与外部压力")
@@ -922,10 +927,11 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
     if luck_cycles:
         current_cycle = luck_cycles.get("current")
         age = luck_cycles["startAge"]
+        time_anchor = f"参照日 {NARRATIVE_REFERENCE_DATE} 的历法年份" if use_wisdom else "当前历法年份"
         current_text = (
-            f"当前历法年份落在 {current_cycle['startYear']}—{current_cycle['endYear']} 年的{current_cycle['ganZhi']}运。"
+            f"{time_anchor}落在 {current_cycle['startYear']}—{current_cycle['endYear']} 年的{current_cycle['ganZhi']}运。"
             if current_cycle
-            else "当前年份未落入已列出的八步大运范围。"
+            else f"{time_anchor}未落入已列出的八步大运范围。"
         )
         luck_cycle_context = (
             f"按当前算法，大运{luck_cycles['direction']}，约 {age['years']} 岁 {age['months']} 个月起运；"
@@ -1120,6 +1126,8 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
         quality=quality,
         hour_boundary=hour_boundary,
         pillars=pillars,
+        use_wisdom=use_wisdom,
+        narrative_references=narrative_references,
     )
     sections = narrative["sections"]
 
@@ -1161,6 +1169,8 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
     }
     for section in sections:
         section["technical"] = technical_cues[section["id"]]
+        if section.get("narrativeLayout") == "linked_actions":
+            section["technical"] = "本章汇总前文已经说明的行动及其理由；适用条件保持不变，不另作预测。"
         section.setdefault("insight", deep_insights[section["id"]])
         section_evidence = list(evidence_map[section["id"]])
         if data["timePrecision"] != "unknown" and "KR_002_NO_HOUR_NO_FULL_DETAIL" in section_evidence:
@@ -1168,6 +1178,29 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
         if data["calendarType"] != "lunar" and "KR_004_LUNAR_LEAP_MONTH" in section_evidence:
             section_evidence.remove("KR_004_LUNAR_LEAP_MONTH")
         section["evidenceIds"] = section_evidence
+
+    is_youth = use_wisdom and narrative.get("audience") == "youth"
+    if use_wisdom:
+        for claim in claims:
+            if claim["confidence"] != "计算结果":
+                claim["confidence"] = "传统解释，待现实核对"
+    if is_youth:
+        topics = {"portrait": "兴趣与自主表达", "structure": "学习方式与环境支持", "character": "情绪表达与安全边界",
+                  "career": "适龄探索，不预定职业", "wealth": "愿望与日常物品的安排，不预测财富", "relationships": "家庭与同伴相处",
+                  "turning-points": "新环境中的适应与支持", "wellbeing": "日常恢复与必要的专业帮助", "review": "保留孩子的观察与提问", "actions": "由照顾者协助的适龄尝试"}
+        for section in sections:
+            section["technical"] = f"成长主题：{topics[section['id']]}。出生盘仅保留为文化背景，不据此认定未成年人的性格、学业成绩或人生结果。"
+            band = section["narrativeEvidence"]["selectionBasis"]["developmentalBand"]
+            section["note"] = {
+                "early_childhood": "供照护者按孩子实际发展与需要选用；场景不是既有经历，不设发展里程碑，也不预定天赋或未来。",
+                "school_age": "面向学龄阶段的本人和支持者；请结合实际能力与感受选择尝试，场景不是既有经历，不作为成绩或人格预测。",
+                "teen": "情境供本人及支持者对照，不代表已经发生的经历；具体建议以现实条件为准，不由出生资料决定性格或未来。",
+            }[band]
+        calculation_claims = [claim for claim in claims if claim["confidence"] == "计算结果"]
+        claims = [{"id": f"YOUTH_SUPPORT_{index}", "category": "成长支持", "claim": axis["description"],
+                   "evidence": ["根据出生日期与模型参照日区分阅读年龄；具体需要应由现实观察确认"],
+                   "counterEvidence": ["年龄相同不代表发展、兴趣或支持需求相同"], "confidence": "养育建议，不是人格预测",
+                   "action": axis["value"]} for index, axis in enumerate(narrative["axes"])] + calculation_claims
 
     applied_rule_ids = {rule_id for section in sections for rule_id in section["evidenceIds"]}
     if data["timePrecision"] != "unknown":
@@ -1185,6 +1218,8 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
         {"label": "动力来源", "value": narrative["axes"][2]["value"] + " · " + narrative["lifeStage"]["name"]},
         {"label": "当前提醒", "value": profile["prompt"]},
     ]
+    if is_youth:
+        highlights = [{"label": axis["name"], "value": axis["value"]} for axis in narrative["axes"]]
     return {
         "input": data,
         "chart": {
@@ -1199,7 +1234,7 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
         "report": {
             "title": f"{data['name']}命理综合研判报告",
             "generatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
-            "modelVersion": MODEL_VERSION,
+            "modelVersion": WISDOM_MODEL_VERSION if use_wisdom else MODEL_VERSION,
             "highlights": highlights,
             "claims": claims,
             "luckCycles": luck_cycles,
@@ -1207,6 +1242,9 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
                 "seedVersion": narrative["seedVersion"],
                 "lifeStage": narrative["lifeStage"],
                 "axes": narrative["axes"],
+                "diversityAudit": narrative.get("diversityAudit"),
+                "audience": narrative.get("audience", "adult"),
+                "referenceDate": narrative.get("referenceDate"),
             },
             "sections": sections,
             "foundation": {
@@ -1235,7 +1273,11 @@ def generate_report(payload: dict[str, Any]) -> dict[str, Any]:
                 ],
                 "note": "样本规模用于扩大覆盖、寻找结构近邻、发现规则偏差与保存校验线索；结构距离只在本模型内部用于排序，不代表两个人命运相同，也不等同于已经获得科学预测准确率。",
             },
-            "disclosure": "这份报告以传统命理结构作人生观察与情境预测。它可以提供另一种理解自己的语言，但不会替你决定人生；所有预测都应等待现实验证，也不能替代医疗、法律、投资等专业意见。",
+            "disclosure": (
+                "这份报告为未成年人及支持者提供适龄的生活观察与反思场景，出生盘仅作文化背景。它不预测人格、成绩或未来，不代替实际了解与必要的专业支持。"
+                if is_youth else
+                "这份报告以传统命理结构作人生观察与情境预测。它可以提供另一种理解自己的语言，但不会替你决定人生；所有预测都应等待现实验证，也不能替代医疗、法律、投资等专业意见。"
+            ),
         },
     }
 
