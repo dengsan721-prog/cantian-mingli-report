@@ -2,6 +2,7 @@ services:
   - type: web
     name: cantian-mingli-report
     runtime: python
+    plan: free
     rootDir: work/mingli-demo
     buildCommand: pip install -r requirements.txt
     startCommand: python server.py --host 0.0.0.0
