@@ -12,6 +12,19 @@ python server.py --port 8765
 
 浏览器打开 [http://127.0.0.1:8765](http://127.0.0.1:8765)。页面必须通过本地服务访问，不能直接双击 `index.html`。
 
+## 公网移动端部署
+
+仓库根目录已提供 `render.yaml`，可在 Render 连接 GitHub 仓库后直接部署为 Web Service。Render 会从 `work/mingli-demo` 安装依赖，并以 `python server.py --host 0.0.0.0` 启动；服务端会自动读取云平台注入的 `PORT` 环境变量。
+
+部署步骤：
+
+1. 登录 Render，选择 New Blueprint 或 New Web Service。
+2. 连接 GitHub 仓库 `dengsan721-prog/cantian-mingli-report`。
+3. 选择分支 `codex/precision-validation-foundation`。
+4. 确认服务名 `cantian-mingli-report`，部署完成后打开 Render 给出的 `https://...onrender.com` 地址。
+
+生成报告依赖 Python 后端接口，不能只用 GitHub Pages 作为完整产品链接。免费实例首次打开可能需要等待冷启动。当前查询记录使用本地 SQLite 文件，云端实例重建或重新部署时记录可能丢失；需要长期保存时应改接托管数据库。
+
 ## 数据记录
 
 - 查询记录保存在 `data/demo_records.db`。

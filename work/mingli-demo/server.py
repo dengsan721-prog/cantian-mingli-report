@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sqlite3
 import sys
 import uuid
@@ -335,7 +336,7 @@ class DemoHandler(SimpleHTTPRequestHandler):
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the Mingli report demo server.")
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8765")))
     parser.add_argument("--db", type=Path, default=DEFAULT_DB)
     parser.add_argument("--wisdom-candidate", action="store_true", help="Accepted for compatibility; the wisdom report is now the default")
     parser.add_argument("--legacy-report", action="store_true", help="Use the legacy mingli-report-v3 generator")
