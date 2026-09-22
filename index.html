@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f8f3e7">
+    <title>参天·东方智慧命理研判</title>
+    <style>
+      :root {
+        --ink: #17262c;
+        --muted: #657178;
+        --gold: #b57a28;
+        --jade: #1f6b61;
+        --night: #24324c;
+        --line: rgba(111, 83, 34, .18);
+        font-family: "PingFang SC", "Microsoft YaHei UI", "Noto Sans CJK SC", system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 12% 0%, rgba(255, 214, 126, .42), transparent 22rem),
+          radial-gradient(circle at 92% 8%, rgba(61, 117, 158, .2), transparent 24rem),
+          linear-gradient(135deg, #fbf6e9 0%, #f5efe2 44%, #ecf5f1 100%);
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: .38;
+        background-image:
+          linear-gradient(120deg, transparent 0 18px, rgba(181,122,40,.16) 19px, transparent 21px),
+          radial-gradient(circle, rgba(31,107,97,.12) 1px, transparent 1.6px);
+        background-size: 72px 72px, 22px 22px;
+        mask-image: linear-gradient(#000, rgba(0,0,0,.16));
+      }
+      .app { width: min(1120px, 100%); margin: 0 auto; padding: 14px; position: relative; }
+      .topbar { display: flex; align-items: center; gap: 12px; padding: 8px 2px 14px; }
+      .mark {
+        width: 44px; height: 44px; border-radius: 15px; display: grid; place-items: center;
+        color: #fff; font-weight: 900; font-size: 21px;
+        background: linear-gradient(145deg, #263553, #1f6b61 58%, #b57a28);
+        box-shadow: 0 14px 30px rgba(33, 59, 71, .24);
+      }
+      .brand strong { display: block; font-size: 18px; }
+      .brand span { display: block; margin-top: 2px; color: var(--muted); font-size: 13px; }
+      .layout { display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start; }
+      .panel {
+        position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 22px;
+        background: linear-gradient(145deg, rgba(255, 252, 244, .9), rgba(255,255,255,.74));
+        box-shadow: 0 22px 60px rgba(62, 58, 45, .14);
+        backdrop-filter: blur(14px);
+      }
+      .panel::before {
+        content: ""; position: absolute; inset: 0 0 auto; height: 8px;
+        background: linear-gradient(90deg, var(--gold), #d5b15d, var(--jade), #385b86);
+      }
+      .form-panel { padding: 26px 18px 18px; }
+      h1 { margin: 0; font-size: clamp(28px, 6vw, 52px); line-height: 1.05; }
+      .lead { color: #425157; margin: 12px 0 20px; line-height: 1.75; }
+      .field { display: grid; gap: 7px; margin-bottom: 13px; }
+      label, legend { font-size: 13px; color: #4e5c62; font-weight: 800; }
+      input, select, textarea {
+        width: 100%; border: 1px solid rgba(96, 79, 44, .18); border-radius: 14px;
+        background: rgba(255,255,255,.78); color: var(--ink); font: inherit; font-size: 16px;
+        padding: 12px 13px; outline: none;
+      }
+      textarea { min-height: 84px; resize: vertical; line-height: 1.65; }
+      input:focus, select:focus, textarea:focus { border-color: rgba(181,122,40,.72); box-shadow: 0 0 0 4px rgba(181,122,40,.12); }
+      .grid2, .grid3 { display: grid; gap: 10px; }
+      .grid2 { grid-template-columns: 1fr 1fr; }
+      .grid3 { grid-template-columns: 1fr 1fr 1fr; }
+      .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .seg input { position: absolute; opacity: 0; pointer-events: none; }
+      .seg span {
+        display: grid; place-items: center; min-height: 42px; border-radius: 999px;
+        border: 1px solid rgba(96, 79, 44, .18); background: rgba(255,255,255,.54);
+        font-size: 14px; font-weight: 800; color: #405158;
+      }
+      .seg input:checked + span { color: #fff; border-color: transparent; background: linear-gradient(135deg, #273654, #1e6b62 55%, #ad7729); }
+      .btn {
+        width: 100%; border: 0; border-radius: 16px; padding: 14px 16px; cursor: pointer;
+        color: #fff; font: inherit; font-size: 17px; font-weight: 900;
+        background:
+          linear-gradient(90deg, rgba(255,255,255,.16), transparent 22%, rgba(255,255,255,.14) 50%, transparent 78%),
+          linear-gradient(135deg, #293a5d, #1d7068 52%, #b77b28);
+        box-shadow: 0 16px 34px rgba(41, 58, 93, .24);
+      }
+      .note { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+      .history { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+      .history h2 { font-size: 15px; margin: 0 0 10px; }
+      .history-list { display: grid; gap: 8px; }
+      .history-item {
+        display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left;
+        width: 100%; border: 1px solid rgba(96, 79, 44, .16); border-radius: 14px;
+        background: rgba(255,255,255,.58); padding: 10px 12px; color: var(--ink);
+      }
+      .history-item strong { display: block; font-size: 14px; }
+      .history-item small { color: var(--muted); }
+      .report-panel { min-height: 660px; padding: 28px; }
+      .empty { min-height: 600px; display: grid; place-items: center; text-align: center; }
+      .sigil {
+        width: 90px; height: 90px; margin: 0 auto 18px; border-radius: 50%;
+        display: grid; place-items: center; color: #fff; font-size: 42px; font-weight: 900;
+        background: conic-gradient(from 120deg, #b57a28, #e7c46b, #1f6b61, #334567, #b57a28);
+        box-shadow: inset 0 0 0 8px rgba(255,255,255,.28), 0 24px 60px rgba(49,61,73,.22);
+      }
+      .kicker { color: var(--gold); font-weight: 900; font-size: 13px; }
+      .subtitle { color: #415258; line-height: 1.75; margin: 0; }
+      .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid rgba(181,122,40,.22); border-radius: 20px; overflow: hidden; margin: 18px 0 24px; }
+      .summary-card { min-height: 132px; padding: 16px; background: rgba(255,255,255,.46); border-right: 1px solid rgba(181,122,40,.18); }
+      .summary-card:nth-child(4) { border-right: 0; }
+      .summary-card span { display: block; color: var(--gold); font-weight: 900; font-size: 24px; opacity: .72; }
+      .summary-card small { display: block; color: #667176; font-weight: 900; margin: 4px 0 8px; }
+      .summary-card strong { font-size: 16px; line-height: 1.55; }
+      .section { margin: 18px 0; padding: 20px; border-radius: 20px; border: 1px solid rgba(96,79,44,.16); background: rgba(255,255,255,.58); }
+      .section h2 { margin: 0 0 10px; font-size: 20px; color: #22333a; }
+      .section p { margin: 0 0 10px; color: #2e3d42; line-height: 1.9; }
+      .tagrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .tag { border: 1px solid rgba(181,122,40,.28); color: #75501f; background: rgba(255,246,223,.72); border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 900; }
+      .ghost { border: 1px solid rgba(96,79,44,.18); background: rgba(255,255,255,.52); color: #2e3d42; border-radius: 14px; padding: 11px 14px; font-weight: 900; }
+      .actions { display: flex; gap: 10px; margin-top: 14px; }
+      .model { background: linear-gradient(145deg, rgba(38,53,83,.08), rgba(181,122,40,.10)); }
+      @media (max-width: 880px) {
+        .app { padding: 12px; }
+        .layout { grid-template-columns: 1fr; }
+        .form-panel, .report-panel { padding: 22px 14px; border-radius: 20px; }
+        .grid2, .grid3 { grid-template-columns: 1fr; }
+        .summary-grid { grid-template-columns: 1fr 1fr; }
+        .summary-card:nth-child(2) { border-right: 0; }
+        .summary-card { border-bottom: 1px solid rgba(181,122,40,.14); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="mark">命</div>
+        <div class="brand"><strong>参天·东方智慧命理研判</strong><span>建立命盘，信息越准，研判越稳</span></div>
+      </header>
+      <main class="layout">
+        <section class="panel form-panel">
+          <h1>建立命盘</h1>
+          <p class="lead">把出生资料放进来，系统会生成一份更像人生提纲的综合研判。事件可以不填；若填写，会让表达更贴近真实生活。</p>
+          <form id="birthForm">
+            <div class="field"><label for="name">姓名</label><input id="name" required maxlength="40" placeholder="请输入姓名"></div>
+            <div class="grid2">
+              <fieldset class="field"><legend>性别</legend><div class="seg"><label><input name="gender" value="男" type="radio" checked><span>男</span></label><label><input name="gender" value="女" type="radio"><span>女</span></label><label><input name="gender" value="未知" type="radio"><span>未知</span></label></div></fieldset>
+              <fieldset class="field"><legend>历法</legend><div class="seg"><label><input name="calendar" value="阳历" type="radio" checked><span>阳历</span></label><label><input name="calendar" value="农历" type="radio"><span>农历</span></label><label><input name="calendar" value="不详" type="radio"><span>不详</span></label></div></fieldset>
+            </div>
+            <div class="grid3"><div class="field"><label for="year">年</label><select id="year" required></select></div><div class="field"><label for="month">月</label><select id="month" required></select></div><div class="field"><label for="day">日</label><select id="day" required></select></div></div>
+            <div class="grid2">
+              <div class="field"><label for="time">出生时刻</label><select id="time"><option value="不详">不清楚</option><option>子时 23:00-00:59</option><option>丑时 01:00-02:59</option><option>寅时 03:00-04:59</option><option>卯时 05:00-06:59</option><option>辰时 07:00-08:59</option><option>巳时 09:00-10:59</option><option>午时 11:00-12:59</option><option>未时 13:00-14:59</option><option>申时 15:00-16:59</option><option>酉时 17:00-18:59</option><option>戌时 19:00-20:59</option><option>亥时 21:00-22:59</option></select></div>
+              <div class="field"><label for="place">出生地点</label><input id="place" required placeholder="省市区县或详细地点"></div>
+            </div>
+            <div class="field"><label for="events">人生事件 <span style="color:#8a7a65;font-weight:600">选填，写某年某月发生了什么</span></label><textarea id="events" placeholder="例如：2018年4月孩子出生；2020年换工作；2023年搬家。"></textarea></div>
+            <button class="btn" type="submit">开启研判 →</button>
+            <p class="note">GitHub Pages 移动端版会把查询记录保存在你的手机浏览器里；换设备不会同步。</p>
+          </form>
+          <div class="history"><h2>查询记录</h2><div class="history-list" id="historyList"></div></div>
+        </section>
+        <section class="panel report-panel" id="report"><div class="empty"><div><div class="sigil">命</div><h1>先把资料交给时间</h1><p class="lead">报告会把专业判断放在底层，把能读进去、能拿来照见生活的表达放在表层。</p></div></div></section>
+      </main>
+    </div>
+    <script>
+      const years = document.querySelector("#year"), months = document.querySelector("#month"), days = document.querySelector("#day"), form = document.querySelector("#birthForm"), report = document.querySelector("#report"), historyList = document.querySelector("#historyList");
+      const storeKey = "cantian-github-pages-reports-v1";
+      function option(value, label) { const item = document.createElement("option"); item.value = value; item.textContent = label || value; return item; }
+      years.append(option("", "选择年份")); for (let y = new Date().getFullYear(); y >= 1900; y--) years.append(option(String(y)));
+      months.append(option("", "月份")); for (let m = 1; m <= 12; m++) months.append(option(String(m), m + "月"));
+      days.append(option("", "日期")); for (let d = 1; d <= 31; d++) days.append(option(String(d), d + "日"));
+      function hashText(text) { let h = 2166136261; for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+      function pick(list, seed, offset) { return list[(seed + (offset || 0)) % list.length]; }
+      function season(month) { const m = Number(month); if ([3,4,5].includes(m)) return "春木升发"; if ([6,7,8].includes(m)) return "夏火外放"; if ([9,10,11].includes(m)) return "秋金收束"; return "冬水蓄藏"; }
+      function hourPower(time) { if (!time || time === "不详") return "时气未定"; const b = time.slice(0,1); return ({子:"水",丑:"土",寅:"木",卯:"木",辰:"土",巳:"火",午:"火",未:"土",申:"金",酉:"金",戌:"土",亥:"水"})[b] || "时气未定"; }
+      function readHistory() { try { return JSON.parse(localStorage.getItem(storeKey) || "[]"); } catch { return []; } }
+      function saveHistory(records) { localStorage.setItem(storeKey, JSON.stringify(records.slice(0, 30))); }
+      function makeReport(input) {
+        const seed = hashText(JSON.stringify(input)), s = season(input.month), hour = hourPower(input.time);
+        const cores = ["稳中求进", "先蓄后发", "外柔内硬", "以慢为快", "遇压成器", "借势开局"];
+        const modes = ["适合把复杂事拆成清楚步骤", "越到关键处越要稳住节奏", "先建立秩序，再谈突破", "不怕晚成，怕心气被琐事磨散", "适合在长期主义里长出力量"];
+        const relations = ["先让感受被听见，再讨论答案", "关系里最需要的是边界清楚、心意柔和", "真正的贵人常来自稳定合作，而非一时热闹", "亲近的人若能同频，做事会少走很多弯路"];
+        const reminders = ["给思考一个截止时间", "把计划写在纸上，别只放在心里", "遇到大事先睡一觉再定夺", "少解释，多交付可见结果"];
+        const core = pick(cores, seed), mode = pick(modes, seed, 3), rel = pick(relations, seed, 5), reminder = pick(reminders, seed, 7);
+        const placeTone = /陕西|山|宝鸡|商洛|西安|关中/.test(input.place) ? "出生地带着山川与关中气象，人的底色往往不轻飘，重承诺，也重现实里的体面。" : "出生地会给人一层生活底色：家族记忆、地域节奏与早年见闻，会影响一个人后来判断安全感的方式。";
+        const eventLine = input.events ? "你给出的经历线索会把这份报告从泛泛判断拉回真实人生：那些年份像路标，提醒研判不要只停在性格上，而要看选择、承担与转折。" : "你暂时没有填写人生事件，报告会先以出生资料做主轴；之后补充关键年份，判断会更像贴身复盘。";
+        return {
+          title: input.name + "的命理综合研判报告",
+          opening: "命盘像一条正在铺开的山路。这里不把人说死，而是把时间、性情、处事、关系和转折放在一起看：哪里该稳，哪里该醒，哪里可以重新起势。",
+          summary: [{label:"命盘主调",text:core + "，" + s + "的底色明显"},{label:"成事方式",text:mode},{label:"关系课题",text:rel},{label:"当下提醒",text:reminder}],
+          sections: [
+            {title:"一、底色画像", tags:[s,hour,"性情底色"], paragraphs:[input.name + "的资料显示，命盘气质不是单薄的一条线，而像一间有光影层次的屋子：外面看见的是态度，里面藏着的是秩序感、警觉心和对稳定生活的渴望。","出生月份落在" + s + "，做事不宜只看一时冲劲。真正适合你的路，是先把手里的局面理顺，再从熟悉的地方慢慢扩大边界。",placeTone]},
+            {title:"二、成事方式", tags:["事业","节奏",core], paragraphs:["你的成事方式更像烧一炉火：刚开始未必声势很大，但只要方向对、柴火续得稳，后劲会比别人想象得更长。","遇到复杂局面时，不要急着证明自己全都能扛。最好的做法是把目标拆小，把责任排清，把能交付的东西先拿出来。这样一来，别人会慢慢信任你的判断。","真正的转机常出现在你愿意把旧经验重新整理的时候。过去吃过的亏、背过的压力、忍过的误解，都不该只变成委屈，它们应当变成方法。"]},
+            {title:"三、关系与家庭", tags:["家庭","协作","边界"], paragraphs:["关系里最怕的不是争执，而是重要的话一直没有被好好说出来。你适合把心里的判断讲得更具体：希望对方怎么做、自己能承担什么、底线在哪里。",rel + "。这句话看似简单，实际上是你在人际里减少内耗的关键。","家庭与亲密关系会影响你的状态。心里安稳时，你做事更有耐心；关系混乱时，你容易把力量消耗在解释和忍耐里。"]},
+            {title:"四、财务与资源", tags:["财富","资源","长期"], paragraphs:["财务上不宜追求刺激式翻盘，更适合建立长期可复用的能力、渠道和信用。钱对你来说不仅是数字，也是安全感和选择权。","资源要分三层看：眼前收入、长期能力、关键关系。只盯第一层会焦虑，只谈理想又容易落空。把三层同时经营，局面才会越来越稳。","今年开始，可以把账目、计划、技能升级放到同一张表里看。看清流向，心就不乱；心不乱，判断会更准。"]},
+            {title:"五、转折与行动建议", tags:["纠偏","行动","复盘"], paragraphs:[eventLine,"接下来最值得做的，不是等待一个神奇机会，而是把生活里已经松动的环节重新扣紧：作息、现金流、合作关系、健康检查、核心技能，都算命盘落地的地方。",reminder + "。这不是小提醒，而是避免反复消耗的关键动作。很多命运的改变，都是从一个稳定执行的小动作开始的。"]},
+            {title:"六、深层洞见", tags:["洞见","希望","真善美"], paragraphs:["这份研判最想提醒你的，是不要把自己困在单一身份里。你不是只能顺着旧轨道走的人，只是每一次改变都需要一个足够稳的支点。","命理的价值不在于把人说死，而在于帮人看见：哪些性情可以成为力量，哪些习惯正在偷走好运，哪些关系值得珍惜，哪些局面该及时止损。","把这份报告当成一张人生草图即可。真正改变生活的，不是报告本身，而是你读完之后，愿意从哪一件具体的事开始调整。"]}
+          ]
+        };
+      }
+      function renderReport(record) {
+        const r = record.report;
+        report.innerHTML = '<div class="kicker">参天·东方智慧命理研判</div><h1>' + r.title + '</h1><p class="subtitle">' + r.opening + '</p><div class="actions"><button class="ghost" id="copyBtn" type="button">复制报告</button><button class="ghost" id="topBtn" type="button">回到填写</button></div><div class="summary-grid">' + r.summary.map((item,i) => '<div class="summary-card"><span>0' + (i+1) + '</span><small>' + item.label + '</small><strong>' + item.text + '</strong></div>').join("") + '</div>' + r.sections.map(s => '<section class="section"><h2>' + s.title + '</h2>' + s.paragraphs.map(p => '<p>' + p + '</p>').join("") + '<div class="tagrow">' + s.tags.map(t => '<span class="tag">' + t + '</span>').join("") + '</div></section>').join("") + '<section class="section model"><h2>研判模型</h2><p>移动端版把出生资料、时间节律、地点语境、事件线索与表达模板分层处理：底层形成稳定判断，中层做生活场景转译，表层生成更适合阅读和行动的表达。同一资料会保持稳定，不同资料会尽量拉开叙事角度。</p><p>完整 Python v86 模型已经保留在 GitHub 仓库；此页面是可直接通过 GitHub Pages 使用的公网静态版。</p></section>';
+        document.querySelector("#copyBtn").addEventListener("click", () => navigator.clipboard.writeText(report.innerText));
+        document.querySelector("#topBtn").addEventListener("click", () => scrollTo({ top: 0, behavior: "smooth" }));
+      }
+      function renderHistory() {
+        const records = readHistory(); historyList.innerHTML = "";
+        if (!records.length) { historyList.innerHTML = '<p class="note">还没有记录，生成第一份报告后会出现在这里。</p>'; return; }
+        records.forEach(record => { const btn = document.createElement("button"); btn.type = "button"; btn.className = "history-item"; btn.innerHTML = "<span><strong>" + record.input.name + "</strong><small>" + record.input.calendar + " " + record.input.year + "-" + record.input.month + "-" + record.input.day + "</small></span><small>" + record.createdAt.slice(5,16).replace("T"," ") + "</small>"; btn.addEventListener("click", () => renderReport(record)); historyList.append(btn); });
+      }
+      form.addEventListener("submit", event => {
+        event.preventDefault();
+        const input = { name: document.querySelector("#name").value.trim(), gender: document.querySelector('input[name="gender"]:checked').value, calendar: document.querySelector('input[name="calendar"]:checked').value, year: years.value, month: months.value, day: days.value, time: document.querySelector("#time").value, place: document.querySelector("#place").value.trim(), events: document.querySelector("#events").value.trim() };
+        if (!input.name || !input.year || !input.month || !input.day || !input.place) return;
+        const record = { id: String(hashText(JSON.stringify(input))), createdAt: new Date().toISOString(), input, report: makeReport(input) };
+        const records = readHistory().filter(item => item.id !== record.id); records.unshift(record); saveHistory(records); renderHistory(); renderReport(record); report.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      renderHistory();
+    </script>
+  </body>
+</html>
